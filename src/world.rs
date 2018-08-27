@@ -1,29 +1,34 @@
 extern crate image;
 
 
-struct World {
-    world_static: WorldStatic,
-    world_dynamic: WorldDynamic
+
+#[derive(Clone, Debug)]
+pub struct World {
+    pub heightmap: Heightmap,
+    pub sea_level: u32
 }
 
-struct WorldStatic {
-    heightmap: Heightmap
+impl World {
+
+    pub fn new(heightmap: Heightmap, sea_level: u32) -> World {
+        World{heightmap, sea_level}
+    }
+
 }
 
-struct WorldDynamic {
-    sea_level: u32
-}
-
-struct Heightmap {
-    width: u32,
-    height: u32,
+#[derive(Clone, Debug)]
+pub struct Heightmap {
+    pub width: u32,
+    pub height: u32,
     values: Vec<Vec<u32>>
 }
 
 impl Heightmap {
 
+    pub const MAX_HEIGHT: u32 = 256;
+
     pub fn new(width: u32, height: u32) -> Heightmap {
-        let mut values: Vec<Vec<u32>> = vec![vec![0; height as usize]; width as usize];
+        let values: Vec<Vec<u32>> = vec![vec![0; height as usize]; width as usize];
         Heightmap{width, height, values}
     }
 
