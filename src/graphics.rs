@@ -7,7 +7,6 @@ use version::Local;
 use self::opengl_graphics::{ GlGraphics, OpenGL };
 use self::piston::input::*;
 use graphics::graphics::{clear, polygon, Transformed};
-use std::cmp::max;
 
 pub struct Graphics {
     graphics: GlGraphics,

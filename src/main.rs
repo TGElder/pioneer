@@ -32,6 +32,7 @@ fn main() {
 
     let mut drag_controller = DragController::new();
     let mut drag_last_pos: [f64; 2] = [0.0, 0.0];
+    let mut mouse_pos: [f64; 2] = [0.0, 0.0];
 
     while let Some(e) = window.next() {
         if let Some(r) = e.render_args() {
@@ -54,17 +55,32 @@ fn main() {
                 Drag::Interrupt => true,
             }
         });
+
+        if let Some(s) = e.mouse_cursor_args() {
+            mouse_pos = s;
+        }
+
        
         if let Some(s) = e.mouse_scroll_args() {
+            let x_centre = (mouse_pos[0] - graphics.offset.0) / graphics.scale;
+            let y_centre = (mouse_pos[1] - graphics.offset.1) / graphics.scale;
             if s[1] == 1.0 { // zoom in
+                graphics.offset.0 = graphics.offset.0 - (x_centre * graphics.scale);
+                graphics.offset.1 = graphics.offset.1 - (y_centre * graphics.scale);
                 graphics.scale *= 2.0;
             } else if s[1] == -1.0 { // zoom out
+                graphics.offset.0 = graphics.offset.0 + (x_centre * graphics.scale) / 2.0;
+                graphics.offset.1 = graphics.offset.1 + (y_centre * graphics.scale) / 2.0;
                 graphics.scale /= 2.0;
             }
         }
 
+
+
+ 
     }
 }
+
 
 pub fn create_window() -> PistonWindow {
 
