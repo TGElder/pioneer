@@ -13,7 +13,9 @@ pub struct Graphics {
     world: Local<World>,
     polygons: Vec<ColoredPolygon>,
     pub offset: (f64, f64),
-    pub scale: f64
+    pub scale: f64,
+    rotation: usize,
+    pub projection: IsometricProjection
 }
 
 impl Graphics {
@@ -24,7 +26,9 @@ impl Graphics {
             world,
             polygons: vec![],
             offset: (0.0, 0.0),
-            scale: 1.0
+            scale: 1.0,
+            rotation: 0,
+            projection: Graphics::get_projection(0)
         }
     }
 
@@ -48,6 +52,20 @@ impl Graphics {
             
         });
 
+    }
+
+    pub fn rotate(&mut self) {
+        self.rotation = (self.rotation + 1) % 4;
+        self.projection = Graphics::get_projection(self.rotation);
+    }
+
+    fn get_projection(rotation: usize) -> IsometricProjection {
+        const COEFFS: [(f64, f64); 4] = [(1.0, 1.0), (-1.0, 1.0), (-1.0, -1.0), (1.0, -1.0)];
+        IsometricProjection{
+            c: COEFFS[rotation].0,
+            s: COEFFS[rotation].1,
+            z: 10.0
+        }
     }
 
     pub fn update_primitives(&mut self) {
@@ -81,8 +99,8 @@ impl Graphics {
                             z_focus - w.sea_level
                         };
           
-                        let iso = Graphics::to_isometric(x_focus as u32, y_focus as u32, z_focus);
-                        //println!("{}, {}, {} -> {}, {}", x_focus, y_focus, z_focus, iso.0, iso.1);
+                        let iso = self.projection.to_isometric(x_focus as u32, y_focus as u32, z_focus);
+
                         polygon[d] = [iso.0, iso.1];
 
                         color += z_focus as f32 / max_height_over_sea_level;
@@ -97,15 +115,29 @@ impl Graphics {
         }
     }
 
-    pub fn to_isometric(x: u32, y: u32, z: u32) -> (f64, f64) {
-        let iso_x = x as f64 - y as f64;
-        let iso_y = ((x as f64 + y as f64) / 2.0) - (z as f64 / 10.0);
-        (iso_x, iso_y)
-    }
-
 }
 
 struct ColoredPolygon {
     polygon: [[f64; 2]; 4],
     color: [f32; 4],
+}
+
+pub struct IsometricProjection {
+    c: f64,
+    s: f64,
+    z: f64
+}
+
+impl IsometricProjection {
+    pub fn to_isometric(&self, x: u32, y: u32, z: u32) -> (f64, f64) {
+        let iso_x = self.c * x as f64 - self.s * y as f64;
+        let iso_y = ((self.s * x as f64 + self.c* y as f64) / 2.0) - (z as f64 / self.z);
+        (iso_x, iso_y)
+    }
+
+    pub fn to_world(&self, iso_x: f64, iso_y: f64) -> (u32, u32) {
+        let y = ((2.0 * iso_y * self.c) - (self.s * iso_x)) / 2.0;
+        let x = (iso_x + self.s * y) / self.c;
+        (x as u32, y as u32)
+    }
 }

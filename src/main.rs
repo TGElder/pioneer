@@ -11,7 +11,7 @@ use self::piston::window::WindowSettings;
 use self::piston_window::*;
 
 use world::{World, Heightmap};
-use version::{Version, Local};
+use version::{Version, Local, Publisher};
 use graphics::Graphics;
 use std::sync::{Arc, RwLock};
 use drag_controller::{ DragController, Drag };
@@ -21,7 +21,7 @@ const WINDOW_TITLE: &'static str = "Pioneer";
 
 fn main() {
 
-    let height_map = Heightmap::from_grayscale_image("807.png");
+    let height_map = Heightmap::from_grayscale_image("8192.png");
     let world: World = World::new(height_map, 64);
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
@@ -29,6 +29,7 @@ fn main() {
     let mut graphics = Graphics::new(OPENGL, Local::new(&world_version));
 
     graphics.update_primitives();
+    graphics.offset = (1024.0, 0.0);
 
     let mut drag_controller = DragController::new();
     let mut drag_last_pos: [f64; 2] = [0.0, 0.0];
@@ -59,7 +60,6 @@ fn main() {
         if let Some(s) = e.mouse_cursor_args() {
             mouse_pos = s;
         }
-
        
         if let Some(s) = e.mouse_scroll_args() {
             let x_centre = (mouse_pos[0] - graphics.offset.0) / graphics.scale;
@@ -75,9 +75,25 @@ fn main() {
             }
         }
 
+        if let Some(Button::Keyboard(Key::Space)) = e.press_args() {
+
+            let x_centre = (mouse_pos[0] - graphics.offset.0) / graphics.scale;
+            let y_centre = (mouse_pos[1] - graphics.offset.1) / graphics.scale;
+
+            let (iso_x_centre, iso_y_centre) = graphics.projection.to_world(x_centre, y_centre);
 
 
- 
+            graphics.rotate();
+
+            let (x_centre_new, y_centre_new) = graphics.projection.to_isometric(iso_x_centre, iso_y_centre, 0);
+
+
+            graphics.offset.0 = graphics.scale * (x_centre - x_centre_new) + graphics.offset.0;
+            graphics.offset.1 = graphics.scale * (y_centre - y_centre_new) + graphics.offset.1;
+
+            graphics.update_primitives();
+        }
+
     }
 }
 
