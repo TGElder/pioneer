@@ -85,8 +85,9 @@ impl Graphics {
 
             for x in 0..width - 1 {
                 for y in 0..height - 1 {
-                    let mut polygon: [[f64; 2]; 4] = [[0.0, 0.0]; 4];
+                    let mut polygon: Vec<[f64; 2]> = vec![];
                     let mut color: f32 = 0.0;
+                    let mut above_sea: Vec<usize> = vec![];
                 
                     for d in 0..4 {
                         let x_focus = x + X_DELTAS[d];
@@ -96,17 +97,22 @@ impl Graphics {
                         z_focus = if z_focus <= w.sea_level {
                             0
                         } else {
+                            above_sea.push(d);
                             z_focus - w.sea_level
                         };
           
                         let iso = self.projection.to_isometric(x_focus as u32, y_focus as u32, z_focus);
 
-                        polygon[d] = [iso.0, iso.1];
+                        polygon.push([iso.0, iso.1]);
 
                         color += z_focus as f32 / max_height_over_sea_level;
                     }
 
-                    if color > 0.0 {
+                    if above_sea.len() == 1 {
+                        polygon.remove((above_sea[0] + 2) % 4);
+                    }
+
+                    if !above_sea.is_empty() {
                         self.polygons.push(ColoredPolygon{polygon, color: [0.0, color/4.0, 0.0, 1.0]});
                     }
                 }
@@ -118,7 +124,7 @@ impl Graphics {
 }
 
 struct ColoredPolygon {
-    polygon: [[f64; 2]; 4],
+    polygon: Vec<[f64; 2]>,
     color: [f32; 4],
 }
 
