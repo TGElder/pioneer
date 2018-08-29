@@ -80,11 +80,18 @@ impl Graphics {
             let width: usize = w.heightmap.width as usize;
             let height: usize = w.heightmap.height as usize;
 
-            //self.polygons = Vec::with_capacity(width as usize - 1 * height as usize - 1);
-            self.polygons = vec![];
+            self.polygons = Vec::with_capacity((width - 1) as usize * (height - 1) as usize);
+            //self.polygons = vec![];
 
-            for x in 0..width - 1 {
-                for y in 0..height - 1 {
+            for i in 0..width - 1 {
+
+                // Ensures back tiles are drawn first
+                let x = if self.projection.s == -1.0 {(width - 2) - i} else {i};
+
+                for j in 0..height - 1 {
+
+                    let y = if self.projection.c == -1.0 {(height- 2) - j} else {j};
+
                     let mut polygon: Vec<[f64; 2]> = vec![];
                     let mut color: f32 = 0.0;
                     let mut above_sea: Vec<usize> = vec![];
@@ -119,6 +126,10 @@ impl Graphics {
             }
 
         }
+    }
+
+    fn get_color(heights: [u32; 4]) {
+
     }
 
 }
