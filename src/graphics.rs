@@ -7,6 +7,7 @@ use version::Local;
 use self::opengl_graphics::{ GlGraphics, OpenGL };
 use self::piston::input::*;
 use graphics::graphics::{clear, polygon, Transformed};
+use std::f64;
 
 pub struct Graphics {
     graphics: GlGraphics,
@@ -81,7 +82,6 @@ impl Graphics {
             let height: usize = w.heightmap.height as usize;
 
             self.polygons = Vec::with_capacity((width - 1) as usize * (height - 1) as usize);
-            //self.polygons = vec![];
 
             for i in 0..width - 1 {
 
@@ -93,13 +93,16 @@ impl Graphics {
                     let y = if self.projection.c == -1.0 {(height- 2) - j} else {j};
 
                     let mut polygon: Vec<[f64; 2]> = vec![];
-                    let mut color: f32 = 0.0;
                     let mut above_sea: Vec<usize> = vec![];
+                    let mut points: [(f64, f64, f64); 4] = [(0.0, 0.0, 0.0); 4];
+                    let mut color: f32 = 0.0;
                 
                     for d in 0..4 {
                         let x_focus = x + X_DELTAS[d];
                         let y_focus = y + Y_DELTAS[d];
                         let mut z_focus = w.heightmap.get(&(x_focus as u32), &(y_focus as u32));
+
+                        points[d] = (x_focus as f64, y_focus as f64, z_focus as f64 * 1.0);
 
                         z_focus = if z_focus <= w.sea_level {
                             0
@@ -115,12 +118,14 @@ impl Graphics {
                         color += z_focus as f32 / max_height_over_sea_level;
                     }
 
+                    let color = (get_color(points));
+
                     if above_sea.len() == 1 {
                         polygon.remove((above_sea[0] + 2) % 4);
                     }
 
                     if !above_sea.is_empty() {
-                        self.polygons.push(ColoredPolygon{polygon, color: [0.0, color/4.0, 0.0, 1.0]});
+                        self.polygons.push(ColoredPolygon{polygon, color: [0.0, color, 0.0, 1.0]});
                     }
                 }
             }
@@ -128,11 +133,10 @@ impl Graphics {
         }
     }
 
-    fn get_color(heights: [u32; 4]) {
-
-    }
+   
 
 }
+
 
 struct ColoredPolygon {
     polygon: Vec<[f64; 2]>,
@@ -157,4 +161,41 @@ impl IsometricProjection {
         let x = (iso_x + self.s * y) / self.c;
         (x as u32, y as u32)
     }
+}
+
+ fn get_color(points: [(f64, f64, f64); 4]) -> f32 {
+        let u = sub(points[0], points[2]);
+        let v = sub(points[1], points[3]);
+        let normal = cross(u, v);
+        let light = (0.0, 1.0, -1.0);
+        (angle(normal, light) / f64::consts::PI) as f32
+
+}
+
+fn dot(u: (f64, f64, f64), v: (f64, f64, f64)) -> f64 {
+    u.0 * v.0 + u.1 * v.1 + u.2 * v.2
+}
+
+fn sub(u: (f64, f64, f64), v: (f64, f64, f64)) -> (f64, f64, f64) {
+    (
+        u.0 - v.0,
+        u.1 - v.1,
+        u.2 - v.2
+    )
+}
+
+fn mag(u: (f64, f64, f64)) -> f64 {
+    (u.0 * u.0 + u.1 * u.1 + u.2 * u.2).sqrt()
+}
+
+fn cross(u: (f64, f64, f64), v: (f64, f64, f64)) -> (f64, f64, f64) {
+    (
+        u.1 * v.2 - u.2 * v.1,
+        u.2 * v.0 - u.0 * v.2,
+        u.0 * v.1 - u.1 * v.0
+    )
+}
+
+fn angle(u: (f64, f64, f64), v: (f64, f64, f64)) -> f64 {
+    (dot(u, v) / (mag(u) * mag(v))).acos()
 }

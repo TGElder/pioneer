@@ -107,7 +107,7 @@ pub fn create_window() -> PistonWindow {
         .opengl(OPENGL)
         .vsync(false)
         .exit_on_esc(true)
-        .samples(0)
+        .samples(4)
         .build()
         .unwrap()
 }
