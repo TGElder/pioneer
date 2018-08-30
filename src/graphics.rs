@@ -105,7 +105,7 @@ impl Graphics {
                         points[d] = (x_focus as f64, y_focus as f64, z_focus as f64 * 1.0);
 
                         z_focus = if z_focus <= w.sea_level {
-                            0
+                            0.0
                         } else {
                             above_sea.push(d);
                             z_focus - w.sea_level
@@ -118,7 +118,7 @@ impl Graphics {
                         color += z_focus as f32 / max_height_over_sea_level;
                     }
 
-                    let color = (get_color(points));
+                    let color = (get_color(points) + color / 4.0) / 2.0;
 
                     if above_sea.len() == 1 {
                         polygon.remove((above_sea[0] + 2) % 4);
@@ -150,9 +150,9 @@ pub struct IsometricProjection {
 }
 
 impl IsometricProjection {
-    pub fn to_isometric(&self, x: u32, y: u32, z: u32) -> (f64, f64) {
+    pub fn to_isometric(&self, x: u32, y: u32, z: f64) -> (f64, f64) {
         let iso_x = self.c * x as f64 - self.s * y as f64;
-        let iso_y = ((self.s * x as f64 + self.c* y as f64) / 2.0) - (z as f64 / self.z);
+        let iso_y = ((self.s * x as f64 + self.c* y as f64) / 2.0) - (z / self.z);
         (iso_x, iso_y)
     }
 
@@ -167,7 +167,7 @@ impl IsometricProjection {
         let u = sub(points[0], points[2]);
         let v = sub(points[1], points[3]);
         let normal = cross(u, v);
-        let light = (0.0, 1.0, -1.0);
+        let light = (1.0, 0.0, 1.0);
         (angle(normal, light) / f64::consts::PI) as f32
 
 }
