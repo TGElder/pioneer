@@ -142,11 +142,11 @@ impl Graphics {
             for river in w.rivers.iter() {
                 let x = river[0];
                 let y = river[1];
-                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
+                let mut z = w.heightmap.get(&(y as u32), &(x as u32));
                 let iso_from = self.projection.to_isometric(y, x, z);
                 let x = river[2];
                 let y = river[3];
-                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
+                let mut z = w.heightmap.get(&(y as u32), &(x as u32));
                 let iso_to = self.projection.to_isometric(y, x, z);
                 let line = [iso_from.0, iso_from.1, iso_to.0, iso_to.1];
                 self.lines.push(ColoredLine{line, color: Graphics::BLUE});
