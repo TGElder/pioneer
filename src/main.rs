@@ -21,8 +21,8 @@ const WINDOW_TITLE: &'static str = "Pioneer";
 
 fn main() {
 
-    let height_map = Heightmap::from_csv_file("4096.csv");
-    let world: World = World::new(height_map, 256.0);
+    let height_map = Heightmap::from_csv_file("1024.csv");
+    let world: World = World::new(height_map, 256.0, World::load_rivers_from_file("1024_rivers.csv"));
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
     let mut window = create_window();

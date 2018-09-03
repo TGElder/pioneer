@@ -6,13 +6,14 @@ use world::{World, Heightmap};
 use version::Local;
 use self::opengl_graphics::{ GlGraphics, OpenGL };
 use self::piston::input::*;
-use graphics::graphics::{clear, polygon, Transformed};
+use graphics::graphics::{clear, polygon, line, Transformed};
 use std::f64;
 
 pub struct Graphics {
     graphics: GlGraphics,
     world: Local<World>,
     polygons: Vec<ColoredPolygon>,
+    lines: Vec<ColoredLine>,
     pub offset: (f64, f64),
     pub scale: f64,
     rotation: usize,
@@ -21,11 +22,14 @@ pub struct Graphics {
 
 impl Graphics {
 
+    const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+
     pub fn new(opengl: OpenGL, world: Local<World>) -> Graphics {
         Graphics{
             graphics: GlGraphics::new(opengl),
             world,
             polygons: vec![],
+            lines: vec![],
             offset: (0.0, 0.0),
             scale: 1.0,
             rotation: 0,
@@ -35,20 +39,23 @@ impl Graphics {
 
     pub fn render(&mut self, args: &RenderArgs) {
 
-        const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
-
         let offset = &self.offset;
         let scale = &self.scale;
         let polygons = &self.polygons;
+        let lines = &self.lines;
 
         self.graphics.draw(args.viewport(), |c, gl| {
 
-            clear(BLUE, gl);
+            clear(Graphics::BLUE, gl);
 
             let transform = c.transform.trans(offset.0, offset.1).scale(*scale, *scale);
                                        
             for p in polygons {
                 polygon(p.color, &p.polygon, transform, gl);
+            }
+
+            for l in lines {
+                line(l.color, *scale / 10.0, l.line, transform, gl);
             }
             
         });
@@ -130,6 +137,21 @@ impl Graphics {
                 }
             }
 
+            self.lines = vec![];
+
+            for river in w.rivers.iter() {
+                let x = river[0];
+                let y = river[1];
+                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
+                let iso_from = self.projection.to_isometric(y, x, z);
+                let x = river[2];
+                let y = river[3];
+                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
+                let iso_to = self.projection.to_isometric(y, x, z);
+                let line = [iso_from.0, iso_from.1, iso_to.0, iso_to.1];
+                self.lines.push(ColoredLine{line, color: Graphics::BLUE});
+            }
+
         }
     }
 
@@ -140,6 +162,11 @@ impl Graphics {
 
 struct ColoredPolygon {
     polygon: Vec<[f64; 2]>,
+    color: [f32; 4],
+}
+
+struct ColoredLine {
+    line: [f64; 4],
     color: [f32; 4],
 }
 

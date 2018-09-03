@@ -6,13 +6,33 @@ use std::io::prelude::*;
 #[derive(Clone, Debug)]
 pub struct World {
     pub heightmap: Heightmap,
-    pub sea_level: f64
+    pub sea_level: f64,
+    pub rivers: Vec<[u32; 4]>
 }
 
 impl World {
 
-    pub fn new(heightmap: Heightmap, sea_level: f64) -> World {
-        World{heightmap, sea_level}
+    pub fn new(heightmap: Heightmap, sea_level: f64, rivers: Vec<[u32; 4]>) -> World {
+        World{heightmap, sea_level, rivers}
+    }
+
+    pub fn load_rivers_from_file(file: &str) -> Vec<[u32; 4]> {
+        let mut f = File::open(file).expect("File not found");
+        let mut text = String::new();
+        f.read_to_string(&mut text).expect("Failed to read file");
+
+        let mut out: Vec<[u32; 4]> = vec![];
+
+        for row in text.split("\n") {
+            let columns: Vec<&str> = row.split(",").collect();
+            let x: u32 = columns[0].parse().unwrap();
+            let y: u32 = columns[1].parse().unwrap();
+            let nx: u32 = columns[2].parse().unwrap();
+            let ny: u32 = columns[3].parse().unwrap();
+            out.push([x, y, nx, ny])
+        }
+
+        out
     }
 
 }
@@ -84,3 +104,4 @@ impl Heightmap {
     }
 
 }
+
