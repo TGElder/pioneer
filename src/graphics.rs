@@ -55,7 +55,7 @@ impl Graphics {
             }
 
             for l in lines {
-                line(l.color, *scale / 10.0, l.line, transform, gl);
+                line(l.color, *scale * l.width, l.line, transform, gl);
             }
             
         });
@@ -142,14 +142,24 @@ impl Graphics {
             for river in w.rivers.iter() {
                 let x = river[0];
                 let y = river[1];
-                let mut z = w.heightmap.get(&(y as u32), &(x as u32));
-                let iso_from = self.projection.to_isometric(y, x, z);
+                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
+                z = if z <= w.sea_level {
+                    0.0
+                } else {
+                    z - w.sea_level
+                };
+                let iso_from = self.projection.to_isometric(x, y, z);
                 let x = river[2];
                 let y = river[3];
-                let mut z = w.heightmap.get(&(y as u32), &(x as u32));
-                let iso_to = self.projection.to_isometric(y, x, z);
+                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
+                z = if z <= w.sea_level {
+                    0.0
+                } else {
+                    z - w.sea_level
+                };
+                let iso_to = self.projection.to_isometric(x, y, z);
                 let line = [iso_from.0, iso_from.1, iso_to.0, iso_to.1];
-                self.lines.push(ColoredLine{line, color: Graphics::BLUE});
+                self.lines.push(ColoredLine{line, color: Graphics::BLUE, width: 0.1});
             }
 
         }
@@ -168,6 +178,7 @@ struct ColoredPolygon {
 struct ColoredLine {
     line: [f64; 4],
     color: [f32; 4],
+    width: f64
 }
 
 pub struct IsometricProjection {
