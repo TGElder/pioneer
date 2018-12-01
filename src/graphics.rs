@@ -72,7 +72,7 @@ impl Graphics {
         IsometricProjection{
             c: COEFFS[rotation].0,
             s: COEFFS[rotation].1,
-            z: 10.0
+            z: 20.0
         }
     }
 

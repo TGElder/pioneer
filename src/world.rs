@@ -24,13 +24,15 @@ impl World {
         let mut out: Vec<[u32; 5]> = vec![];
 
         for row in text.split("\n") {
-            let columns: Vec<&str> = row.split(",").collect();
-            let x: u32 = columns[0].parse().unwrap();
-            let y: u32 = columns[1].parse().unwrap();
-            let nx: u32 = columns[2].parse().unwrap();
-            let ny: u32 = columns[3].parse().unwrap();
-            let flow: u32 = columns[4].parse().unwrap();
-            out.push([x, y, nx, ny, flow])
+            if row.len() > 0 {
+                let columns: Vec<&str> = row.split(",").collect();
+                let x: u32 = columns[0].parse().unwrap();
+                let y: u32 = columns[1].parse().unwrap();
+                let nx: u32 = columns[2].parse().unwrap();
+                let ny: u32 = columns[3].parse().unwrap();
+                let flow: u32 = columns[4].parse().unwrap();
+                out.push([x, y, nx, ny, flow]);
+            }
         }
 
         out
@@ -92,13 +94,15 @@ impl Heightmap {
 
         let mut y = 0;
         for row in text.split("\n") {
-            let mut x = 0;
-            for cell in row.split(",") {
-                let height: f64 = cell.parse().unwrap();
-                out.set(&x, &y, height / 488.28125);
-                x += 1;
+            if row.len() > 0 {
+                let mut x = 0;
+                for cell in row.split(",") {
+                    let height: f64 = cell.parse().unwrap();
+                    out.set(&x, &y, height / 2048.0);
+                    x += 1;
+                }
+                y += 1;
             }
-            y += 1;
         }
 
         out

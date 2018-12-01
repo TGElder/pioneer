@@ -16,13 +16,18 @@ use graphics::Graphics;
 use std::sync::{Arc, RwLock};
 use drag_controller::{ DragController, Drag };
 
+use std::env;
+
 const OPENGL: OpenGL = OpenGL::V3_2;
 const WINDOW_TITLE: &'static str = "Pioneer";
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
 
-    let height_map = Heightmap::from_csv_file("4096.csv");
-    let world: World = World::new(height_map, 256.0, World::load_rivers_from_file("4096_rivers.csv"));
+    let file = args.get(1).unwrap();
+
+    let height_map = Heightmap::from_csv_file(&format!("{}.csv", file));
+    let world: World = World::new(height_map, 64.0, World::load_rivers_from_file(&format!("{}_rivers.csv", file)));
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
     let mut window = create_window();
