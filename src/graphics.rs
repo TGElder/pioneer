@@ -12,37 +12,43 @@ use std::f64;
 pub struct Graphics {
     graphics: GlGraphics,
     world: Local<World>,
-    polygons: Vec<ColoredPolygon>,
-    lines: Vec<ColoredLine>,
+    drawables: Vec<Drawable>,
     pub offset: (f64, f64),
     pub scale: f64,
     rotation: usize,
-    pub projection: IsometricProjection
+    pub projection: IsometricProjection,
+    rivers: Option<Vec<Vec<bool>>>
 }
 
 impl Graphics {
 
     const BLUE: [f32; 4] = [0.0, 0.0, 1.0, 1.0];
+    const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 
     pub fn new(opengl: OpenGL, world: Local<World>) -> Graphics {
         Graphics{
             graphics: GlGraphics::new(opengl),
             world,
-            polygons: vec![],
-            lines: vec![],
+            drawables: vec![],
             offset: (0.0, 0.0),
             scale: 1.0,
             rotation: 0,
-            projection: Graphics::get_projection(0)
+            projection: Graphics::get_projection(0),
+            rivers: None
         }
     }
 
     pub fn render(&mut self, args: &RenderArgs) {
 
+        
+
         let offset = &self.offset;
         let scale = &self.scale;
-        let polygons = &self.polygons;
-        let lines = &self.lines;
+        let drawables = &self.drawables;
+
+        let viewport = args.viewport().rect;
+        let top_left: (f64, f64) = self.screen_to_canvas(viewport[0] as f64, viewport[1] as f64);
+        let bottom_right: (f64, f64) = self.screen_to_canvas(viewport[2] as f64, viewport[3] as f64);
 
         self.graphics.draw(args.viewport(), |c, gl| {
 
@@ -50,13 +56,15 @@ impl Graphics {
 
             let transform = c.transform.trans(offset.0, offset.1).scale(*scale, *scale);
                                        
-            for p in polygons {
-                polygon(p.color, &p.polygon, transform, gl);
+            for d in drawables {
+                if Graphics::on_screen(top_left, bottom_right, d) {
+                    match d {
+                        Drawable::ColoredPolygon{polygon: p, color: c} => polygon(*c, p, transform, gl),
+                        Drawable::ColoredLine{line: l, color: c, width: w} => line(*c, *scale * w, *l, transform, gl)
+                    };
+                }
             }
 
-            for l in lines {
-                line(l.color, *scale * l.width, l.line, transform, gl);
-            }
             
         });
 
@@ -79,6 +87,13 @@ impl Graphics {
     pub fn update_primitives(&mut self) {
         self.world.update();
         if let Some(w) = &self.world.local {
+
+            match self.rivers {
+                None => {
+                    self.rivers = Graphics::get_rivers(&w);
+                },
+                _ => {}
+            };
             
             const X_DELTAS: [usize; 4] = [0, 1, 1, 0];
             const Y_DELTAS: [usize; 4] = [0, 0, 1, 1];
@@ -88,7 +103,7 @@ impl Graphics {
             let width: usize = w.heightmap.width as usize;
             let height: usize = w.heightmap.height as usize;
 
-            self.polygons = Vec::with_capacity((width - 1) as usize * (height - 1) as usize);
+            self.drawables = vec![];
 
             for i in 0..width - 1 {
 
@@ -127,58 +142,96 @@ impl Graphics {
 
                     let color = (get_color(points) + color / 4.0) / 2.0;
 
+                    for d in 0..4 {
+                        let d2 = (d + 1) % 4;
+                        self.drawables.push(Drawable::ColoredLine{
+                            line: [polygon[d][0],polygon[d][1], polygon[d2][0], polygon[d2][1]], 
+                            color: Graphics::BLACK,
+                            width: 0.005} );
+                    }
+
                     if above_sea.len() == 1 {
                         polygon.remove((above_sea[0] + 2) % 4);
                     }
 
+                    let river = if let Some(r) = &self.rivers {
+                        r[x][y]
+                    } else{
+                        false
+                    };
+
+                    let color = if river {
+                        Graphics::BLUE
+                    } else {
+                        [0.0, color, 0.0, 1.0]
+                    };
+
+                    //let river: bool = &self.rivers.unwrap()[x][y];
+
                     if !above_sea.is_empty() {
-                        self.polygons.push(ColoredPolygon{polygon, color: [0.0, color, 0.0, 1.0]});
+
+                        self.drawables.push(Drawable::ColoredPolygon{polygon, color});
                     }
                 }
-            }
-
-            self.lines = vec![];
-
-            for river in w.rivers.iter() {
-                let x = river[0];
-                let y = river[1];
-                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
-                z = if z <= w.sea_level {
-                    0.0
-                } else {
-                    z - w.sea_level
-                };
-                let iso_from = self.projection.to_isometric(x, y, z);
-                let x = river[2];
-                let y = river[3];
-                let mut z = w.heightmap.get(&(x as u32), &(y as u32));
-                z = if z <= w.sea_level {
-                    0.0
-                } else {
-                    z - w.sea_level
-                };
-                let iso_to = self.projection.to_isometric(x, y, z);
-                let line = [iso_from.0, iso_from.1, iso_to.0, iso_to.1];
-                self.lines.push(ColoredLine{line, color: Graphics::BLUE, width: 0.1});
             }
 
         }
     }
 
-   
+    fn get_rivers(world: &World) -> Option<Vec<Vec<bool>>> {
+
+        let mut vector = vec![vec![false; world.heightmap.width as usize]; world.heightmap.height as usize];
+
+        for river in world.rivers.iter() {
+            vector[river[0] as usize][river[1] as usize] = true;
+        }
+        Some(vector)
+    }
+
+    pub fn screen_to_canvas(&self, screen_x: f64, screen_y: f64) -> (f64, f64) {
+        let canvas_x = (screen_x - &self.offset.0) / &self.scale;
+        let canvas_y = (screen_y - &self.offset.1) / &self.scale;
+
+        (canvas_x, canvas_y)
+    }
+
+    fn on_screen(top_left: (f64, f64), bottom_right: (f64, f64), drawable: &Drawable) -> bool {
+
+        fn coord_in_bounds(coord: [f64; 2], top_left: (f64, f64), bottom_right: (f64, f64)) -> bool {
+            coord[0] >= top_left.0 && coord[0] <= bottom_right.0 &&
+            coord[1] >= top_left.1 && coord[1] <= bottom_right.1
+        }
+        
+        match drawable {
+            Drawable::ColoredPolygon{polygon, color: _} => {
+                    print!("{:?}", polygon);
+                    coord_in_bounds(polygon[0], top_left, bottom_right)// &&
+                    //coord_in_bounds(polygon[1], top_left, bottom_right) &&
+                    //coord_in_bounds(polygon[2], top_left, bottom_right) &&
+                    //coord_in_bounds(polygon[3], top_left, bottom_right)
+                }
+            ,
+            Drawable::ColoredLine{line, color: _, width: _} => {
+                    print!("{:?}", line);
+                    coord_in_bounds([line[0], line[1]], top_left, bottom_right)// &&
+                    //coord_in_bounds([line[2], line[3]], top_left, bottom_right)
+            }
+            ,
+        }
+    }
 
 }
 
-
-struct ColoredPolygon {
-    polygon: Vec<[f64; 2]>,
-    color: [f32; 4],
-}
-
-struct ColoredLine {
-    line: [f64; 4],
-    color: [f32; 4],
-    width: f64
+enum Drawable {
+    ColoredPolygon {
+        polygon: Vec<[f64; 2]>,
+        color: [f32; 4],
+    },
+    ColoredLine {
+        line: [f64; 4],
+        color: [f32; 4],
+        width: f64
+    },
 }
 
 pub struct IsometricProjection {
