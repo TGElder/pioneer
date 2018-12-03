@@ -2,6 +2,7 @@ pub mod version;
 pub mod world;
 pub mod graphics;
 pub mod scale;
+pub mod mesh;
 
 extern crate piston;
 extern crate piston_window;
