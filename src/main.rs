@@ -1,6 +1,7 @@
 pub mod version;
 pub mod world;
 pub mod graphics;
+pub mod scale;
 
 extern crate piston;
 extern crate piston_window;
@@ -27,7 +28,7 @@ fn main() {
     let file = args.get(1).unwrap();
 
     let height_map = Heightmap::from_csv_file(&format!("{}.csv", file));
-    let world: World = World::new(height_map, 4.0, World::load_rivers_from_file(&format!("{}_rivers.csv", file)));
+    let world: World = World::new(height_map, 32.0, World::load_rivers_from_file(&format!("{}_rivers.csv", file)));
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
     let mut window = create_window();
