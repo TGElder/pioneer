@@ -204,7 +204,6 @@ impl Graphics {
         
         match drawable {
             Drawable::ColoredPolygon{polygon, color: _} => {
-                    print!("{:?}", polygon);
                     coord_in_bounds(polygon[0], top_left, bottom_right)// &&
                     //coord_in_bounds(polygon[1], top_left, bottom_right) &&
                     //coord_in_bounds(polygon[2], top_left, bottom_right) &&
@@ -212,7 +211,6 @@ impl Graphics {
                 }
             ,
             Drawable::ColoredLine{line, color: _, width: _} => {
-                    print!("{:?}", line);
                     coord_in_bounds([line[0], line[1]], top_left, bottom_right)// &&
                     //coord_in_bounds([line[2], line[3]], top_left, bottom_right)
             }
