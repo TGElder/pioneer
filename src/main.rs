@@ -1,6 +1,8 @@
 pub mod version;
 pub mod world;
 pub mod graphics;
+
+pub mod utils;
 pub mod scale;
 pub mod mesh;
 

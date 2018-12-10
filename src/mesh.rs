@@ -1,10 +1,10 @@
 use std::f64;
+use utils::float_ordering;
 
 const MAX_VALUE: f64 = f64::MAX;
 const MIN_VALUE: f64 = f64::MIN;
 const dx: [i8; 8] = [-1, -1, 0, 1, 1, 1, 0, -1];
 const dy: [i8; 8] = [0, -1, -1, -1, 0, 1, 1, 1];
-
 
 pub struct Mesh {
     width: i32,
@@ -48,26 +48,56 @@ impl Mesh {
         self.z = z;
     }
 
-    pub fn get_min_z(&self) {
-        self.z.iter().map(vec -> vec.min)
+
+    pub fn get_min_z(&self) -> f64 {
+        *self.z.iter().map(|column| column.iter().min_by(float_ordering).unwrap())
+            .min_by(float_ordering).unwrap()
     }
 
-    double getMinZ() {
-        double out = Mesh.MAX_VALUE;
-        for (int x=0; x<width; x++) {
-        for (int y=0; y<width; y++) {
-            out = Math.min(out, getZ(x, y));
-        }
-        }
-        return out;
+    pub fn get_max_z(&self) -> f64 {
+        *self.z.iter().map(|column| column.iter().max_by(float_ordering).unwrap())
+            .max_by(float_ordering).unwrap()
     }
-
-
-    
-
-   
 
   
+}
+
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_get_min_z() {
+        let mut mesh = Mesh::new(3);
+
+        let z = vec![
+            vec![0.8, 0.1, 0.3],
+            vec![0.9, 0.7, 0.4],
+            vec![0.2, 0.5, 0.6]
+        ];
+
+        mesh.set_z_vector(z);
+
+        assert_eq!(mesh.get_min_z(), 0.1);
+    }
+
+    #[test]
+    fn test_get_max_z() {
+        let mut mesh = Mesh::new(3);
+
+        let z = vec![
+            vec![0.8, 0.1, 0.3],
+            vec![0.9, 0.7, 0.4],
+            vec![0.2, 0.5, 0.6]
+        ];
+
+        mesh.set_z_vector(z);
+
+        assert_eq!(mesh.get_max_z(), 0.9);
+    }
+
 }
 
 // class Mesh {
