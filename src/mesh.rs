@@ -1,6 +1,9 @@
 use std::f64;
 use utils::float_ordering;
 
+use rand::prelude::*;
+use ::scale::Scale;
+
 const MAX_VALUE: f64 = f64::MAX;
 const MIN_VALUE: f64 = f64::MIN;
 const dx: [i8; 8] = [-1, -1, 0, 1, 1, 1, 0, -1];
@@ -9,6 +12,33 @@ const dy: [i8; 8] = [0, -1, -1, -1, 0, 1, 1, 1];
 pub struct Mesh {
     width: i32,
     z: Vec<Vec<f64>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Split {
+    offset_x: i8,
+    offset_y: i8,
+    z: f64
+}
+
+struct SplitRule {
+    offset_x: i8,
+    offset_y: i8,
+    range: (f64, f64)
+}
+
+impl SplitRule {
+
+    fn generate_split<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Split
+    {
+        let r: f64 = rng.gen_range(random_range.0, random_range.1);
+        let scale: Scale = Scale::new((0.0, 1.0), self.range);
+        Split {
+            offset_x: self.offset_x,
+            offset_y: self.offset_y,
+            z: scale.scale(r)
+        }
+    }
 }
 
 impl Mesh {
@@ -50,12 +80,16 @@ impl Mesh {
 
 
     pub fn get_min_z(&self) -> f64 {
-        *self.z.iter().map(|column| column.iter().min_by(float_ordering).unwrap())
+        *self.z.iter()
+            .map(|column| column.iter()
+                .min_by(float_ordering).unwrap())
             .min_by(float_ordering).unwrap()
     }
 
     pub fn get_max_z(&self) -> f64 {
-        *self.z.iter().map(|column| column.iter().max_by(float_ordering).unwrap())
+        *self.z.iter()
+            .map(|column| column.iter()
+                .max_by(float_ordering).unwrap())
             .max_by(float_ordering).unwrap()
     }
 
@@ -66,7 +100,26 @@ impl Mesh {
 #[cfg(test)]
 mod tests {
 
-    use super::*;
+    use std::u64;
+    use ::mesh::*;
+    use rand::rngs::mock::StepRng;
+
+    #[test]
+    fn test_generate_split() {
+        let rng = StepRng::new(u64::MAX / 2 + 1, 0);
+        let rule = SplitRule{
+            offset_x: 1,
+            offset_y: -1,
+            range: (0.12, 0.1986)
+        };
+        let expected = Split{
+            offset_x: 1,
+            offset_y: -1,
+            z: 0.15537
+        };
+        assert_eq!(rule.generate_split(&mut Box::new(rng), (0.1, 0.8)),expected);
+
+    }
 
     #[test]
     fn test_get_min_z() {
