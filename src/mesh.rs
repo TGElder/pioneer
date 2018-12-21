@@ -1,13 +1,14 @@
 use std::f64;
 use utils::float_ordering;
 
-use rand::prelude::*;
+//use rand::prelude::*;
+use ::rand::Rng;
 use ::scale::Scale;
 
 const MAX_VALUE: f64 = f64::MAX;
 const MIN_VALUE: f64 = f64::MIN;
-const dx: [i8; 8] = [-1, -1, 0, 1, 1, 1, 0, -1];
-const dy: [i8; 8] = [0, -1, -1, -1, 0, 1, 1, 1];
+const dx8: [i8; 8] = [-1, -1, 0, 1, 1, 1, 0, -1];
+const dy8: [i8; 8] = [0, -1, -1, -1, 0, 1, 1, 1];
 
 pub struct Mesh {
     width: i32,
@@ -21,10 +22,17 @@ pub struct Split {
     z: f64
 }
 
+#[derive(Debug, PartialEq)]
 struct SplitRule {
     offset_x: i8,
     offset_y: i8,
     range: (f64, f64)
+}
+
+#[derive(Debug, PartialEq)]
+struct SplitProcess {
+    split_rules: Vec<SplitRule>,
+    splits: Vec<Split>
 }
 
 impl SplitRule {
@@ -38,6 +46,31 @@ impl SplitRule {
             offset_y: self.offset_y,
             z: scale.scale(r)
         }
+    }
+}
+
+impl SplitProcess {
+    fn next<R: Rng> (mut self, rng: &mut Box<R>, random_range: (f64, f64)) -> SplitProcess {
+
+        fn update_rule(rule: SplitRule, split: &Split) -> SplitRule {
+            if rule.offset_x == split.offset_x || rule.offset_y == split.offset_y {
+                SplitRule{
+                    offset_x: rule.offset_x,
+                    offset_y: rule.offset_y,
+                    range: (split.z.min(rule.range.0), rule.range.1)
+                }
+            } else {
+                rule
+            }
+        }
+
+        let split = self.split_rules[0].generate_split(rng, random_range);
+        self.split_rules.remove(0);
+        self.split_rules = self.split_rules.into_iter()
+            .map(|rule| update_rule(rule, &split))
+            .collect();
+        self.splits.push(split);
+        self
     }
 }
 
@@ -78,7 +111,6 @@ impl Mesh {
         self.z = z;
     }
 
-
     pub fn get_min_z(&self) -> f64 {
         *self.z.iter()
             .map(|column| column.iter()
@@ -93,7 +125,56 @@ impl Mesh {
             .max_by(float_ordering).unwrap()
     }
 
+    fn init_split_process(&self, x: i32, y: i32) -> SplitProcess {
+
+        const offset: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
+
+        let mut split_rules: Vec<SplitRule> = offset.iter()
+            .map(|o| {
+                let dx: i32 = (o.0 as i32 * 2) - 1;
+                let dy: i32 = (o.1 as i32 * 2) - 1;
+                let z = self.get_z(x, y);
+                let zs = [
+                    self.get_z_or_default(x + dx, y, MIN_VALUE),
+                    self.get_z_or_default(x, y + dy, MIN_VALUE),
+                    self.get_z_or_default(x + dx, y + dy, MIN_VALUE),
+                    z
+                ];
+                let min_z = zs.iter()
+                    .min_by(float_ordering)
+                    .unwrap();
+
+                SplitRule{offset_x: o.0, offset_y: o.1, range: (*min_z, z)}
+            })
+            .collect();
+
+        split_rules.sort_by(|a, b| a.range.0.partial_cmp(&b.range.0).unwrap());
+
+        SplitProcess{split_rules, splits: vec![]}
+    }
+
+    
+
   
+//   List<Split> splitCell(int x, int y, RNG rng, Scale scale) {
+
+//     List<SplitRule> splitRules = new ArrayList<>();
+
+//     for (int offsetX = 0; offsetX < 2; offsetX++) {
+//       for (int offsetY = 0; offsetY < 2; offsetY++) {
+//         int xNeighbour = (offsetX * 2) - 1;
+//         int yNeighbour = (offsetY * 2) - 1;
+//         double xNeighbourZ = getZ(x + xNeighbour, y, Mesh.MIN_VALUE);
+//         double yNeighbourZ = getZ(x, y + yNeighbour, Mesh.MIN_VALUE);
+//         double dNeighbourZ = getZ(x + xNeighbour, y + yNeighbour, Mesh.MIN_VALUE);
+//         double z = getZ(x, y);
+
+//         double minZ = Stream.of(xNeighbourZ, yNeighbourZ, dNeighbourZ, z).min(Double::compareTo).get();
+
+//         splitRules.add(new SplitRule(offsetX, offsetY, minZ, z));
+
+//       }
+//     }
 }
 
 
@@ -101,8 +182,9 @@ impl Mesh {
 mod tests {
 
     use std::u64;
-    use ::mesh::*;
-    use rand::rngs::mock::StepRng;
+    use super::*;
+    //use rand::rngs::mock::StepRng;
+    use ::rand::StepRng;
 
     #[test]
     fn test_generate_split() {
@@ -149,6 +231,65 @@ mod tests {
         mesh.set_z_vector(z);
 
         assert_eq!(mesh.get_max_z(), 0.9);
+    }
+
+    #[test]
+    fn test_init_split_process() {
+        
+        let mut mesh = Mesh::new(3);
+
+        let z = vec![
+            vec![0.8, 0.3, 0.2],
+            vec![0.9, 0.7, 0.4],
+            vec![0.1, 0.5, 0.6]
+        ];
+
+        mesh.set_z_vector(z);
+
+        let expected = SplitProcess{
+            split_rules: vec![
+                SplitRule{offset_x: 1, offset_y: 0, range: (0.1, 0.7)},
+                SplitRule{offset_x: 0, offset_y: 1, range: (0.2, 0.7)},
+                SplitRule{offset_x: 0, offset_y: 0, range: (0.3, 0.7)},
+                SplitRule{offset_x: 1, offset_y: 1, range: (0.4, 0.7)}
+            ],
+            splits: vec![]
+        };
+
+        assert_eq!(mesh.init_split_process(1, 1), expected);
+    }
+
+    #[test]
+    fn test_next_split_process() {
+
+        let mut rng = Box::new(StepRng::new(u64::MAX / 2 + 1, 0));
+        //TODO random_range has misleading name
+        let random_range = (0.0, 1.0);
+
+        let process = SplitProcess{
+            split_rules: vec![
+                SplitRule{offset_x: 0, offset_y: 0, range: (0.1, 0.7)},
+                SplitRule{offset_x: 1, offset_y: 0, range: (0.2, 0.7)},
+                SplitRule{offset_x: 0, offset_y: 1, range: (0.5, 0.7)},
+                SplitRule{offset_x: 1, offset_y: 1, range: (0.5, 0.7)}
+            ],
+            splits: vec![]
+        };
+
+        let actual = process.next(&mut rng, random_range);
+        
+        let expected = SplitProcess{
+            split_rules: vec![
+                SplitRule{offset_x: 1, offset_y: 0, range: (0.2, 0.7)},
+                SplitRule{offset_x: 0, offset_y: 1, range: (0.4, 0.7)},
+                SplitRule{offset_x: 1, offset_y: 1, range: (0.5, 0.7)}
+            ],
+            splits: vec![
+                Split{offset_x: 0, offset_y: 0, z: 0.4}
+            ]
+        };
+
+        assert_eq!(actual, expected);
     }
 
 }
