@@ -1,8 +1,7 @@
 use std::f64;
 use utils::float_ordering;
 
-//use rand::prelude::*;
-use ::rand::Rng;
+use rand::prelude::*;
 use ::scale::Scale;
 
 const MAX_VALUE: f64 = f64::MAX;
@@ -153,6 +152,29 @@ impl Mesh {
         SplitProcess{split_rules, splits: vec![]}
     }
 
+    fn split<R: Rng> (&self, x: i32, y: i32, rng: &mut Box<R>, random_range: (f64, f64)) -> Vec<Split> {
+        let mut process: SplitProcess = self.init_split_process(x, y);
+
+        while !process.split_rules.is_empty() {
+            process = process.next(rng, random_range);
+        }
+
+        process.splits
+    }
+
+    pub fn next<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
+        let mut out = Mesh::new(self.width * 2);
+        for x in 0..self.width {
+            for y in 0..self.width {
+                let splits = self.split(x, y, rng, random_range);
+                for split in splits {
+                    out.set_z(x * 2 + split.offset_x as i32, y * 2 + split.offset_y as i32, split.z);
+                }
+            }
+        }
+        out
+    }
+
     
 
   
@@ -171,7 +193,7 @@ impl Mesh {
 
 //         double minZ = Stream.of(xNeighbourZ, yNeighbourZ, dNeighbourZ, z).min(Double::compareTo).get();
 
-//         splitRules.add(new SplitRule(offsetX, offsetY, minZ, z));
+//         splitRules.add(new SplitRule( offsetX, offsetY, minZ, z));
 
 //       }
 //     }
@@ -183,12 +205,15 @@ mod tests {
 
     use std::u64;
     use super::*;
-    //use rand::rngs::mock::StepRng;
-    use ::rand::StepRng;
+    use rand::rngs::mock::StepRng;
+    //use ::rand::StepRng;
+
+    fn get_rng() -> Box<StepRng> {
+        Box::new(StepRng::new(u64::MAX / 2 + 1, 0))
+    }
 
     #[test]
     fn test_generate_split() {
-        let rng = StepRng::new(u64::MAX / 2 + 1, 0);
         let rule = SplitRule{
             offset_x: 1,
             offset_y: -1,
@@ -199,7 +224,7 @@ mod tests {
             offset_y: -1,
             z: 0.15537
         };
-        assert_eq!(rule.generate_split(&mut Box::new(rng), (0.1, 0.8)),expected);
+        assert_eq!(rule.generate_split(&mut get_rng(), (0.1, 0.8)),expected);
 
     }
 
@@ -261,8 +286,6 @@ mod tests {
 
     #[test]
     fn test_next_split_process() {
-
-        let mut rng = Box::new(StepRng::new(u64::MAX / 2 + 1, 0));
         //TODO random_range has misleading name
         let random_range = (0.0, 1.0);
 
@@ -276,7 +299,7 @@ mod tests {
             splits: vec![]
         };
 
-        let actual = process.next(&mut rng, random_range);
+        let actual = process.next(&mut get_rng(), random_range);
         
         let expected = SplitProcess{
             split_rules: vec![
@@ -291,6 +314,7 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+
 
 }
 
