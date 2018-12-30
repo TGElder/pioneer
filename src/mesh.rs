@@ -4,14 +4,14 @@ use utils::float_ordering;
 use rand::prelude::*;
 use ::scale::Scale;
 
-const MAX_VALUE: f64 = f64::MAX;
-const MIN_VALUE: f64 = f64::MIN;
+
 const dx8: [i8; 8] = [-1, -1, 0, 1, 1, 1, 0, -1];
 const dy8: [i8; 8] = [0, -1, -1, -1, 0, 1, 1, 1];
 
 pub struct Mesh {
     width: i32,
     z: Vec<Vec<f64>>,
+    out_of_bounds_z: f64
 }
 
 #[derive(Debug, PartialEq)]
@@ -75,14 +75,15 @@ impl SplitProcess {
 
 impl Mesh {
 
-    pub fn new(width: i32) -> Mesh {
+    pub fn new(width: i32, out_of_bounds_z: f64) -> Mesh {
         Mesh{
             width,
-            z: vec![vec![0.0; width as usize]; width as usize]
+            z: vec![vec![0.0; width as usize]; width as usize],
+            out_of_bounds_z
         }
     }
 
-    pub fn get_z(&self, x: i32, y: i32) -> f64 {
+    pub fn get_z_in_bounds(&self, x: i32, y: i32) -> f64 {
         self.z[x as usize][y as usize]
     }
 
@@ -94,11 +95,11 @@ impl Mesh {
         x >= 0 && y >= 0 && x < self.width && y < self.width
     }
 
-    pub fn get_z_or_default(&self, x: i32, y: i32, default: f64) -> f64 {
+    pub fn get_z(&self, x: i32, y: i32) -> f64 {
         if self.in_bounds(x, y) {
-            self.get_z(x, y)
+            self.get_z_in_bounds(x, y)
         } else {
-            default
+            self.out_of_bounds_z
         }
     }
 
@@ -134,9 +135,9 @@ impl Mesh {
                 let dy: i32 = (o.1 as i32 * 2) - 1;
                 let z = self.get_z(x, y);
                 let zs = [
-                    self.get_z_or_default(x + dx, y, MIN_VALUE),
-                    self.get_z_or_default(x, y + dy, MIN_VALUE),
-                    self.get_z_or_default(x + dx, y + dy, MIN_VALUE),
+                    self.get_z(x + dx, y),
+                    self.get_z(x, y + dy),
+                    self.get_z(x + dx, y + dy),
                     z
                 ];
                 let min_z = zs.iter()
@@ -163,7 +164,7 @@ impl Mesh {
     }
 
     pub fn next<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
-        let mut out = Mesh::new(self.width * 2);
+        let mut out = Mesh::new(self.width * 2, self.out_of_bounds_z);
         for x in 0..self.width {
             for y in 0..self.width {
                 let splits = self.split(x, y, rng, random_range);
@@ -230,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_get_min_z() {
-        let mut mesh = Mesh::new(3);
+        let mut mesh = Mesh::new(3, 0.0);
 
         let z = vec![
             vec![0.8, 0.1, 0.3],
@@ -245,7 +246,7 @@ mod tests {
 
     #[test]
     fn test_get_max_z() {
-        let mut mesh = Mesh::new(3);
+        let mut mesh = Mesh::new(3, 0.0);
 
         let z = vec![
             vec![0.8, 0.1, 0.3],
@@ -261,7 +262,7 @@ mod tests {
     #[test]
     fn test_init_split_process() {
         
-        let mut mesh = Mesh::new(3);
+        let mut mesh = Mesh::new(3, 0.0);
 
         let z = vec![
             vec![0.8, 0.3, 0.2],
