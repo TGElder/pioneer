@@ -4,7 +4,6 @@ use utils::float_ordering;
 use rand::prelude::*;
 use ::scale::Scale;
 
-
 const dx8: [i8; 8] = [-1, -1, 0, 1, 1, 1, 0, -1];
 const dy8: [i8; 8] = [0, -1, -1, -1, 0, 1, 1, 1];
 
@@ -131,9 +130,9 @@ impl Mesh {
 
     fn init_split_process(&self, x: i32, y: i32) -> SplitProcess {
 
-        const offset: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
+        const OFFSET: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
 
-        let mut split_rules: Vec<SplitRule> = offset.iter()
+        let mut split_rules: Vec<SplitRule> = OFFSET.iter()
             .map(|o| {
                 let dx: i32 = (o.0 as i32 * 2) - 1;
                 let dy: i32 = (o.1 as i32 * 2) - 1;
@@ -293,6 +292,33 @@ mod tests {
         };
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_split_cell() {
+       
+        let mut mesh = Mesh::new(3, 0.0);
+
+        let z = vec![
+            vec![0.8, 0.3, 0.2],
+            vec![0.9, 0.7, 0.4],
+            vec![0.1, 0.5, 0.6]
+        ];
+
+        mesh.set_z_vector(z);
+
+        let split_process = mesh.init_split_process(1, 1);
+
+        let mut rng = get_rng();
+        let expected = split_process
+            .next(&mut rng, (0.1, 0.5))
+            .next(&mut rng, (0.1, 0.5))
+            .next(&mut rng, (0.1, 0.5))
+            .next(&mut rng, (0.1, 0.5))
+            .splits;
+
+        assert_eq!(mesh.split(1, 1, &mut rng, (0.1, 0.5)), expected);
+        
     }
 
     #[test]
