@@ -166,15 +166,20 @@ impl Mesh {
         process.splits
     }
 
-    pub fn next<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
-        let mut out = Mesh::new(self.width * 2, self.out_of_bounds_z);
+    fn split_all<R: Rng>(&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Vec<Split> {
+        let mut out = Vec::with_capacity((self.width * self.width * 4) as usize);
         for x in 0..self.width {
             for y in 0..self.width {
-                let splits = self.split(x, y, rng, random_range);
-                for split in splits {
-                    out.set_z(split.x, split.y, split.z);
-                }
+                out.append(&mut self.split(x, y, rng, random_range));
             }
+        }
+        out
+    }
+
+    pub fn next<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
+        let mut out = Mesh::new(self.width * 2, self.out_of_bounds_z);
+        for split in self.split_all(rng, random_range) {
+            out.set_z(split.x, split.y, split.z);
         }
         out
     }
@@ -310,15 +315,46 @@ mod tests {
         let split_process = mesh.init_split_process(1, 1);
 
         let mut rng = get_rng();
+        let random_range = (0.1, 0.5);
+
         let expected = split_process
-            .next(&mut rng, (0.1, 0.5))
-            .next(&mut rng, (0.1, 0.5))
-            .next(&mut rng, (0.1, 0.5))
-            .next(&mut rng, (0.1, 0.5))
+            .next(&mut rng, random_range)
+            .next(&mut rng, random_range)
+            .next(&mut rng, random_range)
+            .next(&mut rng, random_range)
             .splits;
 
-        assert_eq!(mesh.split(1, 1, &mut rng, (0.1, 0.5)), expected);
-        
+        assert_eq!(mesh.split(1, 1, &mut rng, random_range), expected);
+    }
+
+    #[test]
+    fn test_next() {
+        let mut mesh = Mesh::new(2, 0.0);
+
+        let z = vec![
+            vec![0.1, 0.2],
+            vec![0.3, 0.4]
+        ];
+
+        mesh.set_z_vector(z);
+
+        let mut rng = get_rng();
+        let random_range = (0.1, 0.5);
+
+        mesh.split(0, 1, &mut rng, random_range);
+
+        let next = mesh.next(&mut rng, random_range);
+
+        fn check_splits(mesh: &Mesh, splits: Vec<Split>) {
+            for split in splits {
+                assert_eq!(mesh.get_z(split.x, split.y), split.z);
+            }
+        }
+
+        check_splits(&next, mesh.split(0, 0, &mut rng, random_range));
+        check_splits(&next, mesh.split(0, 1, &mut rng, random_range));
+        check_splits(&next, mesh.split(1, 0, &mut rng, random_range));
+        check_splits(&next, mesh.split(1, 1, &mut rng, random_range));
     }
 
     #[test]
