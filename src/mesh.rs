@@ -15,15 +15,15 @@ pub struct Mesh {
 
 #[derive(Debug, PartialEq)]
 pub struct Split {
-    offset_x: i8,
-    offset_y: i8,
+    x: i32,
+    y: i32,
     z: f64
 }
 
 #[derive(Debug, PartialEq)]
 struct SplitRule {
-    offset_x: i8,
-    offset_y: i8,
+    x: i32,
+    y: i32,
     range: (f64, f64)
 }
 
@@ -40,8 +40,8 @@ impl SplitRule {
         let r: f64 = rng.gen_range(random_range.0, random_range.1);
         let scale: Scale = Scale::new((0.0, 1.0), self.range);
         Split {
-            offset_x: self.offset_x,
-            offset_y: self.offset_y,
+            x: self.x,
+            y: self.y,
             z: scale.scale(r)
         }
     }
@@ -51,10 +51,10 @@ impl SplitProcess {
     fn next<R: Rng> (mut self, rng: &mut Box<R>, random_range: (f64, f64)) -> SplitProcess {
 
         fn update_rule(rule: SplitRule, split: &Split) -> SplitRule {
-            if rule.offset_x == split.offset_x || rule.offset_y == split.offset_y {
+            if rule.x == split.x || rule.y == split.y {
                 SplitRule{
-                    offset_x: rule.offset_x,
-                    offset_y: rule.offset_y,
+                    x: rule.x,
+                    y: rule.y,
                     range: (split.z.min(rule.range.0), rule.range.1)
                 }
             } else {
@@ -130,7 +130,7 @@ impl Mesh {
 
     fn init_split_process(&self, x: i32, y: i32) -> SplitProcess {
 
-        const OFFSET: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
+        const OFFSET: [(i32, i32); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
 
         let mut split_rules: Vec<SplitRule> = OFFSET.iter()
             .map(|o| {
@@ -147,7 +147,7 @@ impl Mesh {
                     .min_by(float_ordering)
                     .unwrap();
 
-                SplitRule{offset_x: o.0, offset_y: o.1, range: (*min_z, z)}
+                SplitRule{x: x * 2 + o.0, y: y * 2 + o.1, range: (*min_z, z)}
             })
             .collect();
 
@@ -172,7 +172,7 @@ impl Mesh {
             for y in 0..self.width {
                 let splits = self.split(x, y, rng, random_range);
                 for split in splits {
-                    out.set_z(x * 2 + split.offset_x as i32, y * 2 + split.offset_y as i32, split.z);
+                    out.set_z(split.x, split.y, split.z);
                 }
             }
         }
@@ -194,13 +194,13 @@ mod tests {
     #[test]
     fn test_generate_split() {
         let rule = SplitRule{
-            offset_x: 1,
-            offset_y: -1,
+            x: 11,
+            y: 12,
             range: (0.12, 0.1986)
         };
         let expected = Split{
-            offset_x: 1,
-            offset_y: -1,
+            x: 11,
+            y: 12,
             z: 0.15537
         };
         assert_eq!(rule.generate_split(&mut get_rng(), (0.1, 0.8)), expected);
@@ -252,10 +252,10 @@ mod tests {
 
         let expected = SplitProcess{
             split_rules: vec![
-                SplitRule{offset_x: 1, offset_y: 0, range: (0.1, 0.7)},
-                SplitRule{offset_x: 0, offset_y: 1, range: (0.2, 0.7)},
-                SplitRule{offset_x: 0, offset_y: 0, range: (0.3, 0.7)},
-                SplitRule{offset_x: 1, offset_y: 1, range: (0.4, 0.7)}
+                SplitRule{x: 3, y: 2, range: (0.1, 0.7)},
+                SplitRule{x: 2, y: 3, range: (0.2, 0.7)},
+                SplitRule{x: 2, y: 2, range: (0.3, 0.7)},
+                SplitRule{x: 3, y: 3, range: (0.4, 0.7)}
             ],
             splits: vec![]
         };
@@ -270,10 +270,10 @@ mod tests {
 
         let process = SplitProcess{
             split_rules: vec![
-                SplitRule{offset_x: 0, offset_y: 0, range: (0.1, 0.7)},
-                SplitRule{offset_x: 1, offset_y: 0, range: (0.2, 0.7)},
-                SplitRule{offset_x: 0, offset_y: 1, range: (0.5, 0.7)},
-                SplitRule{offset_x: 1, offset_y: 1, range: (0.5, 0.7)}
+                SplitRule{x: 0, y: 0, range: (0.1, 0.7)},
+                SplitRule{x: 1, y: 0, range: (0.2, 0.7)},
+                SplitRule{x: 0, y: 1, range: (0.5, 0.7)},
+                SplitRule{x: 1, y: 1, range: (0.5, 0.7)}
             ],
             splits: vec![]
         };
@@ -282,12 +282,12 @@ mod tests {
         
         let expected = SplitProcess{
             split_rules: vec![
-                SplitRule{offset_x: 1, offset_y: 0, range: (0.2, 0.7)},
-                SplitRule{offset_x: 0, offset_y: 1, range: (0.4, 0.7)},
-                SplitRule{offset_x: 1, offset_y: 1, range: (0.5, 0.7)}
+                SplitRule{x: 1, y: 0, range: (0.2, 0.7)},
+                SplitRule{x: 0, y: 1, range: (0.4, 0.7)},
+                SplitRule{x: 1, y: 1, range: (0.5, 0.7)}
             ],
             splits: vec![
-                Split{offset_x: 0, offset_y: 0, z: 0.4}
+                Split{x: 0, y: 0, z: 0.4}
             ]
         };
 
