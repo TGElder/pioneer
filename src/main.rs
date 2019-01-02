@@ -5,8 +5,6 @@ pub mod mesh;
 pub mod scale;
 pub mod utils;
 
-use mesh::Mesh;
-
 fn main() {
 
     // use rand::rngs::mock::StepRng;
