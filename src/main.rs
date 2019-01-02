@@ -1,9 +1,9 @@
 extern crate rand;
 
-pub mod utils;
-pub mod scale;
-pub mod mesh;
 pub mod downhill;
+pub mod mesh;
+pub mod scale;
+pub mod utils;
 
 use mesh::Mesh;
 
@@ -26,9 +26,9 @@ fn main() {
     // let range = (0.1, 0.9);
 
     // for i in 0..14 {
-        
+
     //     mesh = mesh.next(&mut rng, range);
     //     println!("{}", mesh.get_width());
     // }
-   
+
 }

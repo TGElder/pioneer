@@ -2,57 +2,54 @@ use std::f64;
 use utils::float_ordering;
 
 use rand::prelude::*;
-use ::scale::Scale;
+use scale::Scale;
 
 pub struct Mesh {
     width: i32,
     z: Vec<Vec<f64>>,
-    out_of_bounds_z: f64
+    out_of_bounds_z: f64,
 }
 
 #[derive(Debug, PartialEq)]
 pub struct Split {
     x: i32,
     y: i32,
-    z: f64
+    z: f64,
 }
 
 #[derive(Debug, PartialEq)]
 struct SplitRule {
     x: i32,
     y: i32,
-    range: (f64, f64)
+    range: (f64, f64),
 }
 
 #[derive(Debug, PartialEq)]
 struct SplitProcess {
     split_rules: Vec<SplitRule>,
-    splits: Vec<Split>
+    splits: Vec<Split>,
 }
 
 impl SplitRule {
-
-    fn generate_split<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Split
-    {
+    fn generate_split<R: Rng>(&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Split {
         let r: f64 = rng.gen_range(random_range.0, random_range.1);
         let scale: Scale = Scale::new((0.0, 1.0), self.range);
         Split {
             x: self.x,
             y: self.y,
-            z: scale.scale(r)
+            z: scale.scale(r),
         }
     }
 }
 
 impl SplitProcess {
-    fn next<R: Rng> (mut self, rng: &mut Box<R>, random_range: (f64, f64)) -> SplitProcess {
-
+    fn next<R: Rng>(mut self, rng: &mut Box<R>, random_range: (f64, f64)) -> SplitProcess {
         fn update_rule(rule: SplitRule, split: &Split) -> SplitRule {
             if rule.x == split.x || rule.y == split.y {
-                SplitRule{
+                SplitRule {
                     x: rule.x,
                     y: rule.y,
-                    range: (split.z.min(rule.range.0), rule.range.1)
+                    range: (split.z.min(rule.range.0), rule.range.1),
                 }
             } else {
                 rule
@@ -61,7 +58,9 @@ impl SplitProcess {
 
         let split = self.split_rules[0].generate_split(rng, random_range);
         self.split_rules.remove(0);
-        self.split_rules = self.split_rules.into_iter()
+        self.split_rules = self
+            .split_rules
+            .into_iter()
             .map(|rule| update_rule(rule, &split))
             .collect();
         self.splits.push(split);
@@ -70,12 +69,11 @@ impl SplitProcess {
 }
 
 impl Mesh {
-
     pub fn new(width: i32, out_of_bounds_z: f64) -> Mesh {
-        Mesh{
+        Mesh {
             width,
             z: vec![vec![0.0; width as usize]; width as usize],
-            out_of_bounds_z
+            out_of_bounds_z,
         }
     }
 
@@ -112,24 +110,28 @@ impl Mesh {
     }
 
     pub fn get_min_z(&self) -> f64 {
-        *self.z.iter()
-            .map(|column| column.iter()
-                .min_by(float_ordering).unwrap())
-            .min_by(float_ordering).unwrap()
+        *self
+            .z
+            .iter()
+            .map(|column| column.iter().min_by(float_ordering).unwrap())
+            .min_by(float_ordering)
+            .unwrap()
     }
 
     pub fn get_max_z(&self) -> f64 {
-        *self.z.iter()
-            .map(|column| column.iter()
-                .max_by(float_ordering).unwrap())
-            .max_by(float_ordering).unwrap()
+        *self
+            .z
+            .iter()
+            .map(|column| column.iter().max_by(float_ordering).unwrap())
+            .max_by(float_ordering)
+            .unwrap()
     }
 
     fn init_split_process(&self, x: i32, y: i32) -> SplitProcess {
-
         const OFFSETS: [(i32, i32); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
 
-        let mut split_rules: Vec<SplitRule> = OFFSETS.iter()
+        let mut split_rules: Vec<SplitRule> = OFFSETS
+            .iter()
             .map(|o| {
                 let dx: i32 = (o.0 as i32 * 2) - 1;
                 let dy: i32 = (o.1 as i32 * 2) - 1;
@@ -138,22 +140,33 @@ impl Mesh {
                     self.get_z(x + dx, y),
                     self.get_z(x, y + dy),
                     self.get_z(x + dx, y + dy),
-                    z
+                    z,
                 ];
-                let min_z = zs.iter()
-                    .min_by(float_ordering)
-                    .unwrap();
+                let min_z = zs.iter().min_by(float_ordering).unwrap();
 
-                SplitRule{x: x * 2 + o.0, y: y * 2 + o.1, range: (*min_z, z)}
+                SplitRule {
+                    x: x * 2 + o.0,
+                    y: y * 2 + o.1,
+                    range: (*min_z, z),
+                }
             })
             .collect();
 
         split_rules.sort_by(|a, b| a.range.0.partial_cmp(&b.range.0).unwrap());
 
-        SplitProcess{split_rules, splits: Vec::with_capacity(4)}
+        SplitProcess {
+            split_rules,
+            splits: Vec::with_capacity(4),
+        }
     }
 
-    fn split<R: Rng> (&self, x: i32, y: i32, rng: &mut Box<R>, random_range: (f64, f64)) -> Vec<Split> {
+    fn split<R: Rng>(
+        &self,
+        x: i32,
+        y: i32,
+        rng: &mut Box<R>,
+        random_range: (f64, f64),
+    ) -> Vec<Split> {
         let mut process: SplitProcess = self.init_split_process(x, y);
 
         while !process.split_rules.is_empty() {
@@ -173,7 +186,7 @@ impl Mesh {
         out
     }
 
-    pub fn next<R: Rng> (&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
+    pub fn next<R: Rng>(&self, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
         let mut out = Mesh::new(self.width * 2, self.out_of_bounds_z);
         for split in self.split_all(rng, random_range) {
             out.set_z(split.x, split.y, split.z);
@@ -185,9 +198,9 @@ impl Mesh {
 #[cfg(test)]
 mod tests {
 
-    use std::u64;
     use super::*;
     use rand::rngs::mock::StepRng;
+    use std::u64;
 
     fn get_rng() -> Box<StepRng> {
         Box::new(StepRng::new(u64::MAX / 2 + 1, 0))
@@ -195,18 +208,17 @@ mod tests {
 
     #[test]
     fn test_generate_split() {
-        let rule = SplitRule{
+        let rule = SplitRule {
             x: 11,
             y: 12,
-            range: (0.12, 0.1986)
+            range: (0.12, 0.1986),
         };
-        let expected = Split{
+        let expected = Split {
             x: 11,
             y: 12,
-            z: 0.15537
+            z: 0.15537,
         };
         assert_eq!(rule.generate_split(&mut get_rng(), (0.1, 0.8)), expected);
-
     }
 
     #[test]
@@ -216,7 +228,7 @@ mod tests {
         let z = vec![
             vec![0.8, 0.1, 0.3],
             vec![0.9, 0.7, 0.4],
-            vec![0.2, 0.5, 0.6]
+            vec![0.2, 0.5, 0.6],
         ];
 
         mesh.set_z_vector(z);
@@ -231,7 +243,7 @@ mod tests {
         let z = vec![
             vec![0.8, 0.1, 0.3],
             vec![0.9, 0.7, 0.4],
-            vec![0.2, 0.5, 0.6]
+            vec![0.2, 0.5, 0.6],
         ];
 
         mesh.set_z_vector(z);
@@ -241,25 +253,40 @@ mod tests {
 
     #[test]
     fn test_init_split_process() {
-        
         let mut mesh = Mesh::new(3, 0.0);
 
         let z = vec![
             vec![0.8, 0.3, 0.2],
             vec![0.9, 0.7, 0.4],
-            vec![0.1, 0.5, 0.6]
+            vec![0.1, 0.5, 0.6],
         ];
 
         mesh.set_z_vector(z);
 
-        let expected = SplitProcess{
+        let expected = SplitProcess {
             split_rules: vec![
-                SplitRule{x: 3, y: 2, range: (0.1, 0.7)},
-                SplitRule{x: 2, y: 3, range: (0.2, 0.7)},
-                SplitRule{x: 2, y: 2, range: (0.3, 0.7)},
-                SplitRule{x: 3, y: 3, range: (0.4, 0.7)}
+                SplitRule {
+                    x: 3,
+                    y: 2,
+                    range: (0.1, 0.7),
+                },
+                SplitRule {
+                    x: 2,
+                    y: 3,
+                    range: (0.2, 0.7),
+                },
+                SplitRule {
+                    x: 2,
+                    y: 2,
+                    range: (0.3, 0.7),
+                },
+                SplitRule {
+                    x: 3,
+                    y: 3,
+                    range: (0.4, 0.7),
+                },
             ],
-            splits: vec![]
+            splits: vec![],
         };
 
         assert_eq!(mesh.init_split_process(1, 1), expected);
@@ -270,27 +297,53 @@ mod tests {
         //TODO random_range has misleading name
         let random_range = (0.0, 1.0);
 
-        let process = SplitProcess{
+        let process = SplitProcess {
             split_rules: vec![
-                SplitRule{x: 0, y: 0, range: (0.1, 0.7)},
-                SplitRule{x: 1, y: 0, range: (0.2, 0.7)},
-                SplitRule{x: 0, y: 1, range: (0.5, 0.7)},
-                SplitRule{x: 1, y: 1, range: (0.5, 0.7)}
+                SplitRule {
+                    x: 0,
+                    y: 0,
+                    range: (0.1, 0.7),
+                },
+                SplitRule {
+                    x: 1,
+                    y: 0,
+                    range: (0.2, 0.7),
+                },
+                SplitRule {
+                    x: 0,
+                    y: 1,
+                    range: (0.5, 0.7),
+                },
+                SplitRule {
+                    x: 1,
+                    y: 1,
+                    range: (0.5, 0.7),
+                },
             ],
-            splits: vec![]
+            splits: vec![],
         };
 
         let actual = process.next(&mut get_rng(), random_range);
-        
-        let expected = SplitProcess{
+
+        let expected = SplitProcess {
             split_rules: vec![
-                SplitRule{x: 1, y: 0, range: (0.2, 0.7)},
-                SplitRule{x: 0, y: 1, range: (0.4, 0.7)},
-                SplitRule{x: 1, y: 1, range: (0.5, 0.7)}
+                SplitRule {
+                    x: 1,
+                    y: 0,
+                    range: (0.2, 0.7),
+                },
+                SplitRule {
+                    x: 0,
+                    y: 1,
+                    range: (0.4, 0.7),
+                },
+                SplitRule {
+                    x: 1,
+                    y: 1,
+                    range: (0.5, 0.7),
+                },
             ],
-            splits: vec![
-                Split{x: 0, y: 0, z: 0.4}
-            ]
+            splits: vec![Split { x: 0, y: 0, z: 0.4 }],
         };
 
         assert_eq!(actual, expected);
@@ -298,13 +351,12 @@ mod tests {
 
     #[test]
     fn test_split_cell() {
-       
         let mut mesh = Mesh::new(3, 0.0);
 
         let z = vec![
             vec![0.8, 0.3, 0.2],
             vec![0.9, 0.7, 0.4],
-            vec![0.1, 0.5, 0.6]
+            vec![0.1, 0.5, 0.6],
         ];
 
         mesh.set_z_vector(z);
@@ -328,10 +380,7 @@ mod tests {
     fn test_next() {
         let mut mesh = Mesh::new(2, 0.0);
 
-        let z = vec![
-            vec![0.1, 0.2],
-            vec![0.3, 0.4]
-        ];
+        let z = vec![vec![0.1, 0.2], vec![0.3, 0.4]];
 
         mesh.set_z_vector(z);
 
@@ -355,9 +404,6 @@ mod tests {
     }
 
     #[test]
-    fn next_mesh_should_retain_downhill_property() {
-            
-    }
-
+    fn next_mesh_should_retain_downhill_property() {}
 
 }
