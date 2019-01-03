@@ -37,7 +37,6 @@ impl SplitRule {
 }
 
 impl SplitProcess {
-
     fn new(mesh: &Mesh, x: i32, y: i32) -> SplitProcess {
         const OFFSETS: [(i32, i32); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
 
@@ -71,7 +70,7 @@ impl SplitProcess {
         }
     }
 
-    fn next<R: Rng> (mut self, rng: &mut Box<R>, random_range: (f64, f64)) -> SplitProcess {
+    fn next<R: Rng>(mut self, rng: &mut Box<R>, random_range: (f64, f64)) -> SplitProcess {
         fn update_rule(rule: SplitRule, split: &Split) -> SplitRule {
             if rule.x == split.x || rule.y == split.y {
                 SplitRule {
@@ -103,13 +102,14 @@ impl SplitProcess {
     }
 }
 
-struct MeshSplitter {
-
-}
+pub struct MeshSplitter {}
 
 impl MeshSplitter {
-
-    fn split_all<R: Rng>(mesh: &Mesh, rng: &mut Box<R>, random_range: (f64, f64)) -> Vec<Split> {
+    fn get_all_splits<R: Rng>(
+        mesh: &Mesh,
+        rng: &mut Box<R>,
+        random_range: (f64, f64),
+    ) -> Vec<Split> {
         let mut out = Vec::with_capacity((mesh.get_width() * mesh.get_width() * 4) as usize);
         for x in 0..mesh.get_width() {
             for y in 0..mesh.get_width() {
@@ -119,9 +119,9 @@ impl MeshSplitter {
         out
     }
 
-    pub fn next<R: Rng>(mesh: &Mesh, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
+    pub fn split<R: Rng>(mesh: &Mesh, rng: &mut Box<R>, random_range: (f64, f64)) -> Mesh {
         let mut out = Mesh::new(mesh.get_width() * 2, mesh.get_out_of_bounds_z());
-        for split in MeshSplitter::split_all(mesh, rng, random_range) {
+        for split in MeshSplitter::get_all_splits(mesh, rng, random_range) {
             out.set_z(split.x, split.y, split.z);
         }
         out
@@ -154,7 +154,7 @@ mod tests {
         assert_eq!(rule.generate_split(&mut get_rng(), (0.1, 0.8)), expected);
     }
 
-        #[test]
+    #[test]
     fn test_split_process_new() {
         let mut mesh = Mesh::new(3, 0.0);
 
@@ -252,7 +252,7 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-        #[test]
+    #[test]
     fn test_split_process_complete() {
         let mut mesh = Mesh::new(3, 0.0);
 
@@ -274,11 +274,14 @@ mod tests {
             .next(&mut rng, random_range)
             .splits;
 
-        assert_eq!(SplitProcess::new(&mesh, 1, 1).complete(&mut rng, random_range), expected);
+        assert_eq!(
+            SplitProcess::new(&mesh, 1, 1).complete(&mut rng, random_range),
+            expected
+        );
     }
 
     #[test]
-    fn test_mesh_splitter_next() {
+    fn test_mesh_splitter_split() {
         let mut mesh = Mesh::new(2, 0.0);
 
         let z = vec![vec![0.1, 0.2], vec![0.3, 0.4]];
@@ -288,7 +291,7 @@ mod tests {
         let mut rng = get_rng();
         let random_range = (0.1, 0.5);
 
-        let next = MeshSplitter::next(&mesh, &mut rng, random_range);
+        let next = MeshSplitter::split(&mesh, &mut rng, random_range);
 
         fn check_splits(mesh: &Mesh, splits: Vec<Split>) {
             for split in splits {
@@ -296,10 +299,22 @@ mod tests {
             }
         }
 
-        check_splits(&next, SplitProcess::new(&mesh, 0, 0).complete(&mut rng, random_range));
-        check_splits(&next, SplitProcess::new(&mesh, 0, 1).complete(&mut rng, random_range));
-        check_splits(&next, SplitProcess::new(&mesh, 1, 0).complete(&mut rng, random_range));
-        check_splits(&next, SplitProcess::new(&mesh, 1, 1).complete(&mut rng, random_range));
+        check_splits(
+            &next,
+            SplitProcess::new(&mesh, 0, 0).complete(&mut rng, random_range),
+        );
+        check_splits(
+            &next,
+            SplitProcess::new(&mesh, 0, 1).complete(&mut rng, random_range),
+        );
+        check_splits(
+            &next,
+            SplitProcess::new(&mesh, 1, 0).complete(&mut rng, random_range),
+        );
+        check_splits(
+            &next,
+            SplitProcess::new(&mesh, 1, 1).complete(&mut rng, random_range),
+        );
     }
 
     #[test]
@@ -313,14 +328,10 @@ mod tests {
 
         for i in 0..12 {
             println!("{}", i);
-            mesh = MeshSplitter::next(&mesh, &mut rng, random_range);
+            mesh = MeshSplitter::split(&mesh, &mut rng, random_range);
             let downhill = DownhillMap::new(&mesh);
             assert_eq!(downhill.all_cells_have_downhill(), true);
         }
     }
-
-
-
-
 
 }

@@ -19,9 +19,12 @@ pub struct DownhillMap {
 
 impl DownhillMap {
     pub fn new(mesh: &Mesh) -> DownhillMap {
-        let mut out = DownhillMap{
+        let mut out = DownhillMap {
             width: mesh.get_width(),
-            directions: vec![vec![[false; 8]; mesh.get_width() as usize]; mesh.get_width() as usize],
+            directions: vec![
+                vec![[false; 8]; mesh.get_width() as usize];
+                mesh.get_width() as usize
+            ],
         };
         out.compute_all_directions(mesh);
         out
@@ -98,24 +101,20 @@ mod tests {
 
     #[test]
     fn test_compute_all_directions() {
-
         let mut mesh = Mesh::new(2, 0.0);
-        mesh.set_z_vector(vec![
-            vec![0.1, 0.2],
-            vec![0.3, 0.4],
-        ]);
+        mesh.set_z_vector(vec![vec![0.1, 0.2], vec![0.3, 0.4]]);
 
-        let expected = DownhillMap{
+        let expected = DownhillMap {
             width: 2,
             directions: vec![
                 vec![
                     [true, true, true, true, false, false, false, true],
-                    [true, true, true, false, false, true, true, true]
+                    [true, true, true, false, false, true, true, true],
                 ],
                 vec![
                     [true, true, true, true, true, true, false, true],
-                    [true, true, true, true, true, true, true, true]
-                ]
+                    [true, true, true, true, true, true, true, true],
+                ],
             ],
         };
 
@@ -124,7 +123,7 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-     #[test]
+    #[test]
     fn test_all_cells_have_downhill() {
         let mut mesh = Mesh::new(3, 0.0);
         mesh.set_z_vector(vec![
@@ -137,7 +136,7 @@ mod tests {
         assert_eq!(downhill.all_cells_have_downhill(), true);
     }
 
-     #[test]
+    #[test]
     fn test_not_all_cells_have_downhill() {
         let mut mesh = Mesh::new(3, 0.0);
         mesh.set_z_vector(vec![

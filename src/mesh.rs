@@ -69,7 +69,6 @@ impl Mesh {
     pub fn get_out_of_bounds_z(&self) -> f64 {
         self.out_of_bounds_z
     }
-
 }
 
 #[cfg(test)]
