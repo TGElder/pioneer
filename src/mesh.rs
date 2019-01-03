@@ -404,6 +404,20 @@ mod tests {
     }
 
     #[test]
-    fn next_mesh_should_retain_downhill_property() {}
+    fn next_mesh_should_retain_downhill_property() {
+        use downhill::Downhill;
+
+        let mut mesh = Mesh::new(1, 0.0);
+        mesh.set_z(0, 0, 1.0);
+        let mut rng = get_rng();
+        let random_range = (0.1, 0.5);
+
+        for i in 0..12 {
+            println!("{}", i);
+            mesh = mesh.next(&mut rng, random_range);
+            let downhill = Downhill::new(&mesh);
+            assert_eq!(downhill.all_cells_have_downhill(), true);
+        }
+    }
 
 }

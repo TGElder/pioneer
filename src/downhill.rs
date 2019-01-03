@@ -18,7 +18,7 @@ pub struct Downhill {
 }
 
 impl Downhill {
-    fn new(mesh: &Mesh) -> Downhill {
+    pub fn new(mesh: &Mesh) -> Downhill {
         let mut out = Downhill{
             width: mesh.get_width(),
             directions: vec![vec![[false; 8]; mesh.get_width() as usize]; mesh.get_width() as usize],
