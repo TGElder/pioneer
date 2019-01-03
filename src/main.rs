@@ -1,9 +1,10 @@
 extern crate rand;
 
-pub mod downhill;
-pub mod mesh;
-pub mod scale;
 pub mod utils;
+pub mod scale;
+pub mod mesh;
+pub mod downhill_map;
+pub mod mesh_splitter;
 
 fn main() {
 

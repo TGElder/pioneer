@@ -1,6 +1,6 @@
 use mesh::Mesh;
 
-const DIRECTIONS: [(i32, i32); 8] = [
+pub const DIRECTIONS: [(i32, i32); 8] = [
     (-1, 0),
     (-1, -1),
     (0, -1),
@@ -12,14 +12,14 @@ const DIRECTIONS: [(i32, i32); 8] = [
 ];
 
 #[derive(Debug, PartialEq)]
-pub struct Downhill {
+pub struct DownhillMap {
     width: i32,
     directions: Vec<Vec<[bool; 8]>>,
 }
 
-impl Downhill {
-    pub fn new(mesh: &Mesh) -> Downhill {
-        let mut out = Downhill{
+impl DownhillMap {
+    pub fn new(mesh: &Mesh) -> DownhillMap {
+        let mut out = DownhillMap{
             width: mesh.get_width(),
             directions: vec![vec![[false; 8]; mesh.get_width() as usize]; mesh.get_width() as usize],
         };
@@ -27,7 +27,7 @@ impl Downhill {
         out
     }
 
-    fn get_directions(&self, x: i32, y: i32) -> [bool; 8] {
+    pub fn get_directions(&self, x: i32, y: i32) -> [bool; 8] {
         self.directions[x as usize][y as usize]
     }
 
@@ -49,7 +49,7 @@ impl Downhill {
     fn compute_all_directions(&mut self, mesh: &Mesh) {
         for x in 0..mesh.get_width() {
             for y in 0..mesh.get_width() {
-                let directions = Downhill::compute_directions(mesh, x, y);
+                let directions = DownhillMap::compute_directions(mesh, x, y);
                 self.set_directions(x, y, directions);
             }
         }
@@ -91,7 +91,7 @@ mod tests {
         ]);
 
         let expected = [false, true, true, false, true, false, false, true];
-        let actual = Downhill::compute_directions(&mesh, 1, 1);
+        let actual = DownhillMap::compute_directions(&mesh, 1, 1);
 
         assert_eq!(actual, expected);
     }
@@ -105,7 +105,7 @@ mod tests {
             vec![0.3, 0.4],
         ]);
 
-        let expected = Downhill{
+        let expected = DownhillMap{
             width: 2,
             directions: vec![
                 vec![
@@ -119,7 +119,7 @@ mod tests {
             ],
         };
 
-        let actual = Downhill::new(&mesh);
+        let actual = DownhillMap::new(&mesh);
 
         assert_eq!(actual, expected);
     }
@@ -132,7 +132,7 @@ mod tests {
             vec![0.3, 0.5, 0.9],
             vec![0.6, 0.4, 0.7],
         ]);
-        let downhill = Downhill::new(&mesh);
+        let downhill = DownhillMap::new(&mesh);
 
         assert_eq!(downhill.all_cells_have_downhill(), true);
     }
@@ -145,7 +145,7 @@ mod tests {
             vec![0.3, 0.1, 0.9],
             vec![0.6, 0.4, 0.7],
         ]);
-        let downhill = Downhill::new(&mesh);
+        let downhill = DownhillMap::new(&mesh);
 
         assert_eq!(downhill.all_cells_have_downhill(), false);
     }
