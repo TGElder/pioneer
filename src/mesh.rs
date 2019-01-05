@@ -2,7 +2,7 @@ use std::f64;
 use utils::float_ordering;
 use scale::Scale;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Mesh {
     width: i32,
     z: Vec<Vec<f64>>,
@@ -116,6 +116,28 @@ mod tests {
         mesh.set_z_vector(z);
 
         assert_eq!(mesh.get_max_z(), 0.9);
+    }
+
+    #[test]
+    fn test_rescale() {
+        let mut mesh = Mesh::new(2, 0.0);
+        let z = vec![
+            vec![2.0, 4.0],
+            vec![3.0, 2.0]
+        ];
+        mesh.set_z_vector(z);
+
+        let scale = Scale::new((2.0, 4.0), (0.0, 128.0));
+        let actual = mesh.rescale(&scale);
+
+        let mut expected = Mesh::new(2, 0.0);
+        let z = vec![
+            vec![0.0, 128.0],
+            vec![64.0, 0.0]
+        ];
+        expected.set_z_vector(z);
+
+        assert_eq!(actual, expected);
     }
 
 }
