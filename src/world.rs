@@ -2,18 +2,19 @@ extern crate image;
 
 use std::fs::File;
 use std::io::prelude::*;
+use mesh::Mesh;
 
 #[derive(Clone, Debug)]
 pub struct World {
-    pub heightmap: Heightmap,
+    pub mesh: Mesh,
     pub sea_level: f64,
     pub rivers: Vec<[u32; 5]>
 }
 
 impl World {
 
-    pub fn new(heightmap: Heightmap, sea_level: f64, rivers: Vec<[u32; 5]>) -> World {
-        World{heightmap, sea_level, rivers}
+    pub fn new(mesh: Mesh, sea_level: f64, rivers: Vec<[u32; 5]>) -> World {
+        World{mesh, sea_level, rivers}
     }
 
     pub fn load_rivers_from_file(file: &str) -> Vec<[u32; 5]> {

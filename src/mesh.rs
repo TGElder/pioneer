@@ -1,6 +1,8 @@
 use std::f64;
 use utils::float_ordering;
+use scale::Scale;
 
+#[derive(Clone, Debug)]
 pub struct Mesh {
     width: i32,
     z: Vec<Vec<f64>>,
@@ -68,6 +70,16 @@ impl Mesh {
 
     pub fn get_out_of_bounds_z(&self) -> f64 {
         self.out_of_bounds_z
+    }
+
+    pub fn rescale(&self, scale: &Scale) -> Mesh {
+        let mut out = Mesh::new(self.width, self.out_of_bounds_z);
+        for x in 0..self.width {
+            for y in 0..self.width {
+                out.set_z(x, y, scale.scale(self.get_z(x, y)));
+            }
+        }
+        out
     }
 }
 

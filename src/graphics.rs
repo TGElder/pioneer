@@ -100,8 +100,7 @@ impl Graphics {
 
             let max_height_over_sea_level: f32 = Heightmap::MAX_HEIGHT as f32 - w.sea_level as f32;
 
-            let width: usize = w.heightmap.width as usize;
-            let height: usize = w.heightmap.height as usize;
+            let width: usize = w.mesh.get_width() as usize;
 
             self.drawables = vec![];
 
@@ -110,9 +109,9 @@ impl Graphics {
                 // Ensures back tiles are drawn first
                 let x = if self.projection.s == -1.0 {(width - 2) - i} else {i};
 
-                for j in 0..height - 1 {
+                for j in 0..width - 1 {
 
-                    let y = if self.projection.c == -1.0 {(height- 2) - j} else {j};
+                    let y = if self.projection.c == -1.0 {(width- 2) - j} else {j};
 
                     let mut polygon: Vec<[f64; 2]> = vec![];
                     let mut above_sea: Vec<usize> = vec![];
@@ -122,7 +121,7 @@ impl Graphics {
                     for d in 0..4 {
                         let x_focus = x + X_DELTAS[d];
                         let y_focus = y + Y_DELTAS[d];
-                        let mut z_focus = w.heightmap.get(&(x_focus as u32), &(y_focus as u32));
+                        let mut z_focus = w.mesh.get_z(x_focus as i32, y_focus as i32);
 
                         points[d] = (x_focus as f64, y_focus as f64, z_focus as f64 * 1.0);
 
@@ -180,7 +179,7 @@ impl Graphics {
 
     fn get_rivers(world: &World) -> Option<Vec<Vec<bool>>> {
 
-        let mut vector = vec![vec![false; world.heightmap.width as usize]; world.heightmap.height as usize];
+        let mut vector = vec![vec![false; world.mesh.get_width() as usize]; world.mesh.get_width() as usize];
 
         for river in world.rivers.iter() {
             vector[river[0] as usize][river[1] as usize] = true;

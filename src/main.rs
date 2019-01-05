@@ -16,31 +16,36 @@ extern crate rand;
 use self::piston::window::WindowSettings;
 use self::piston_window::*;
 
-use world::{World, Heightmap};
+use world::World;
+use mesh::Mesh;
+use mesh_splitter::MeshSplitter;
+use scale::Scale;
+use rand::prelude::*;
 use version::{Version, Local};
 use graphics::Graphics;
 use std::sync::{Arc, RwLock};
 use drag_controller::{ DragController, Drag };
 
-use std::env;
-
 const OPENGL: OpenGL = OpenGL::V3_2;
 const WINDOW_TITLE: &'static str = "Pioneer";
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
 
-    let file = args.get(1).unwrap();
-
-    let height_map = Heightmap::from_csv_file(&format!("{}.csv", file));
-    let world: World = World::new(height_map, 32.0, World::load_rivers_from_file(&format!("{}_rivers.csv", file)));
+    let mut mesh = Mesh::new(1, 0.0);
+    mesh.set_z(0, 0, 2048.0);
+    let seed = 2;
+    let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
+    mesh = MeshSplitter::split_n_times(&mesh, &mut rng, (0.1, 0.7), 9);
+    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 2048.0)));
+    
+    let world: World = World::new(mesh, 256.0, vec![]);
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
     let mut window = create_window();
     let mut graphics = Graphics::new(OPENGL, Local::new(&world_version));
 
     graphics.update_primitives();
-    graphics.offset = (1024.0, 0.0);
+    graphics.offset = (256.0, 0.0);
 
     let mut drag_controller = DragController::new();
     let mut drag_last_pos: [f64; 2] = [0.0, 0.0];
@@ -113,7 +118,7 @@ pub fn create_window() -> PistonWindow {
 
         WindowSettings::new(
             WINDOW_TITLE,
-            [2048, 1024]
+            [512, 512]
         )
         .opengl(OPENGL)
         .vsync(false)
