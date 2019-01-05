@@ -126,6 +126,15 @@ impl MeshSplitter {
         }
         out
     }
+
+    pub fn split_n_times<R: Rng>(mesh: &Mesh, rng: &mut Box<R>, random_range: (f64, f64), times: u32) -> Mesh {
+        let mut out = MeshSplitter::split(mesh, rng, random_range);
+        for _ in 1..times {
+            out = MeshSplitter::split(&out, rng, random_range);
+        }
+        out
+    }
+        
 }
 
 #[cfg(test)]
@@ -326,12 +335,10 @@ mod tests {
         let mut rng = get_rng();
         let random_range = (0.1, 0.5);
 
-        for i in 0..12 {
-            println!("{}", i);
-            mesh = MeshSplitter::split(&mesh, &mut rng, random_range);
-            let downhill = DownhillMap::new(&mesh);
-            assert_eq!(downhill.all_cells_have_downhill(), true);
-        }
+        mesh = MeshSplitter::split_n_times(&mesh, &mut rng, random_range, 10);
+        assert_eq!(mesh.get_width(), 1024);
+        let downhill = DownhillMap::new(&mesh);
+        assert_eq!(downhill.all_cells_have_downhill(), true);
     }
 
 }
