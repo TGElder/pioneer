@@ -30,6 +30,10 @@ impl DownhillMap {
         out
     }
 
+    pub fn get_width(&self) -> i32 {
+        self.width
+    }
+
     pub fn get_directions(&self, x: i32, y: i32) -> [bool; 8] {
         self.directions[x as usize][y as usize]
     }
