@@ -21,6 +21,9 @@ use self::piston_window::*;
 use world::World;
 use mesh::Mesh;
 use mesh_splitter::MeshSplitter;
+use downhill_map::DownhillMap;
+use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
+use flow_map::FlowMap;
 use scale::Scale;
 use rand::prelude::*;
 use version::{Version, Local};
@@ -37,8 +40,20 @@ fn main() {
     mesh.set_z(0, 0, 2048.0);
     let seed = 2;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
-    mesh = MeshSplitter::split_n_times(&mesh, &mut rng, (0.1, 0.7), 11);
-    println!("{}", mesh.get_width());
+
+    for i in 0..11 {
+        print!("{}", i);
+        mesh = MeshSplitter::split(&mesh, &mut rng, (0.1, 0.7));
+        let downhill_map = DownhillMap::new(&mesh);
+        for _ in 0..8 {
+            let random_downhill_map = RandomDownhillMap::new(&downhill_map, &mut rng);
+            let random_downhill_map: Box<SingleDownhillMap> = Box::new(random_downhill_map);
+            let flow_map = FlowMap::from(&mesh, &random_downhill_map);
+            print!(".");
+        }
+        println!("{}", mesh.get_width());
+    }
+    
     mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 2048.0)));
     
     let world: World = World::new(mesh, 256.0, vec![]);
