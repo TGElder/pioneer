@@ -17,6 +17,10 @@ impl FlowMap {
         }
     }
 
+    pub fn get_flow(&self, x: i32, y: i32) -> u32 {
+        self.flow[x as usize][y as usize]
+    }
+
     pub fn from(mesh: &Mesh, downhill_map: &Box<SingleDownhillMap>) -> FlowMap {
         let mut out = FlowMap::new(mesh.get_width());
         out.rain_on_all(mesh, downhill_map);
@@ -27,8 +31,8 @@ impl FlowMap {
         let mut focus = (x, y);
         while mesh.in_bounds(focus.0, focus.1) {
             self.flow[focus.0 as usize][focus.1 as usize] += 1;
-            let direction = downhill_map.get_direction(focus.0, focus.1);
-            focus = (focus.0 + DIRECTIONS[direction].0, focus.1 + DIRECTIONS[direction].1);
+            let direction = DIRECTIONS[downhill_map.get_direction(focus.0, focus.1)];
+            focus = (focus.0 + direction.0, focus.1 + direction.1);
         }
     }
 

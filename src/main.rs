@@ -5,6 +5,7 @@ pub mod downhill_map;
 pub mod mesh_splitter;
 pub mod single_downhill_map;
 pub mod flow_map;
+pub mod erosion;
 
 pub mod version;
 pub mod world;
@@ -23,6 +24,7 @@ use mesh::Mesh;
 use mesh_splitter::MeshSplitter;
 use downhill_map::DownhillMap;
 use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
+use erosion::Erosion;
 use flow_map::FlowMap;
 use scale::Scale;
 use rand::prelude::*;
@@ -41,22 +43,18 @@ fn main() {
     let seed = 2;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
-    for i in 0..11 {
-        print!("{}", i);
-        mesh = MeshSplitter::split(&mesh, &mut rng, (0.1, 0.7));
-        let downhill_map = DownhillMap::new(&mesh);
-        for _ in 0..8 {
-            let random_downhill_map = RandomDownhillMap::new(&downhill_map, &mut rng);
-            let random_downhill_map: Box<SingleDownhillMap> = Box::new(random_downhill_map);
-            let flow_map = FlowMap::from(&mesh, &random_downhill_map);
-            print!(".");
+    for i in 0..12 {
+        mesh = MeshSplitter::split(&mesh, &mut rng, (0.05, 0.5));
+        if i < 9 {
+            let threshold = (i as u32).pow(2);
+            mesh = Erosion::erode(mesh, &mut rng, threshold, 8);
         }
-        println!("{}", mesh.get_width());
+        println!("{}-{}", i, mesh.get_width());
     }
     
     mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 2048.0)));
     
-    let world: World = World::new(mesh, 256.0, vec![]);
+    let world: World = World::new(mesh, 64.0, vec![]);
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
     let mut window = create_window();

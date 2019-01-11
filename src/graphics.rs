@@ -141,13 +141,13 @@ impl Graphics {
 
                     let color = (get_color(points) + color / 4.0) / 2.0;
 
-                    for d in 0..4 {
-                        let d2 = (d + 1) % 4;
-                        self.drawables.push(Drawable::ColoredLine{
-                            line: [polygon[d][0],polygon[d][1], polygon[d2][0], polygon[d2][1]], 
-                            color: Graphics::BLACK,
-                            width: 0.005} );
-                    }
+                    // for d in 0..4 {
+                    //     let d2 = (d + 1) % 4;
+                    //     self.drawables.push(Drawable::ColoredLine{
+                    //         line: [polygon[d][0],polygon[d][1], polygon[d2][0], polygon[d2][1]], 
+                    //         color: Graphics::BLACK,
+                    //         width: 0.005} );
+                    // }
 
                     if above_sea.len() == 1 {
                         polygon.remove((above_sea[0] + 2) % 4);
