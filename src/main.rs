@@ -37,7 +37,8 @@ fn main() {
     mesh.set_z(0, 0, 2048.0);
     let seed = 2;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
-    mesh = MeshSplitter::split_n_times(&mesh, &mut rng, (0.1, 0.7), 9);
+    mesh = MeshSplitter::split_n_times(&mesh, &mut rng, (0.1, 0.7), 11);
+    println!("{}", mesh.get_width());
     mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 2048.0)));
     
     let world: World = World::new(mesh, 256.0, vec![]);
