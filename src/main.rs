@@ -32,6 +32,8 @@ use version::{Version, Local};
 use graphics::Graphics;
 use std::sync::{Arc, RwLock};
 use drag_controller::{ DragController, Drag };
+use std::f64::MIN;
+use std::f64::MAX;
 
 const OPENGL: OpenGL = OpenGL::V3_2;
 const WINDOW_TITLE: &'static str = "Pioneer";
@@ -39,7 +41,7 @@ const WINDOW_TITLE: &'static str = "Pioneer";
 fn main() {
 
     let mut mesh = Mesh::new(1, 0.0);
-    mesh.set_z(0, 0, 2048.0);
+    mesh.set_z(0, 0, MAX);
     let seed = 2;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
@@ -52,9 +54,9 @@ fn main() {
         println!("{}-{}", i, mesh.get_width());
     }
     
-    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 2048.0)));
+    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 4096.0)));
     
-    let world: World = World::new(mesh, 64.0, vec![]);
+    let world: World = World::new(mesh, 16.0, vec![]);
     let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
 
     let mut window = create_window();
