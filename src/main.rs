@@ -48,7 +48,7 @@ fn main() {
     for i in 0..12 {
         mesh = MeshSplitter::split(&mesh, &mut rng, (0.05, 0.5));
         if i < 9 {
-            let threshold = (i as u32).pow(2);
+            let threshold = i * 2;
             mesh = Erosion::erode(mesh, &mut rng, threshold, 8);
         }
         println!("{}-{}", i, mesh.get_width());
