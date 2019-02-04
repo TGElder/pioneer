@@ -9,34 +9,20 @@ pub mod erosion;
 
 pub mod version;
 pub mod world;
-pub mod graphics;
 
-extern crate piston;
-extern crate piston_window;
-extern crate drag_controller;
 extern crate rand;
-
-use self::piston::window::WindowSettings;
-use self::piston_window::*;
+extern crate isometric;
 
 use world::World;
 use mesh::Mesh;
 use mesh_splitter::MeshSplitter;
-use downhill_map::DownhillMap;
-use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
 use erosion::Erosion;
-use flow_map::FlowMap;
 use scale::Scale;
 use rand::prelude::*;
 use version::{Version, Local};
-use graphics::Graphics;
 use std::sync::{Arc, RwLock};
-use drag_controller::{ DragController, Drag };
-use std::f64::MIN;
 use std::f64::MAX;
-
-const OPENGL: OpenGL = OpenGL::V3_2;
-const WINDOW_TITLE: &'static str = "Pioneer";
+use isometric::engine::IsometricEngine;
 
 fn main() {
 
@@ -45,7 +31,7 @@ fn main() {
     let seed = 2;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
-    for i in 0..12 {
+    for i in 0..10 {
         mesh = MeshSplitter::split(&mesh, &mut rng, (0.05, 0.5));
         if i < 9 {
             let threshold = i * 2;
@@ -54,94 +40,31 @@ fn main() {
         println!("{}-{}", i, mesh.get_width());
     }
     
-    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 4096.0)));
+    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 10.0)));
     
-    let world: World = World::new(mesh, 16.0, vec![]);
-    let world_version: Version<World> = Arc::new(RwLock::new(Some(Arc::new(world))));
+    let mut vertices: Vec<f32> = Vec::with_capacity((mesh.get_width() * mesh.get_width() * 36) as usize);
+    for x in 0..mesh.get_width() {
+        for y in 0..mesh.get_width() {
+            let a = (x as f32, y as f32, mesh.get_z(x, y) as f32);
+            let b = (x as f32 + 1.0, y as f32, mesh.get_z(x + 1, y) as f32);
+            let c = (x as f32 + 1.0, y as f32 + 1.0, mesh.get_z(x + 1, y + 1) as f32);
+            let d = (x as f32, y as f32 + 1.0, mesh.get_z(x, y + 1) as f32);
+            let color = (mesh.get_z(x, y) as f32) / 10.0;
+            vertices.extend([
+                a.0, a.1, a.2, color, color, color,
+                d.0, d.1, d.2, color, color, color,
+                c.0, c.1, c.2, color, color, color,
+                a.0, a.1, a.2, color, color, color,
+                c.0, c.1, c.2, color, color, color,
+                b.0, b.1, b.2, color, color, color
+            ].iter().cloned())
 
-    let mut window = create_window();
-    let mut graphics = Graphics::new(OPENGL, Local::new(&world_version));
-
-    graphics.update_primitives();
-    graphics.offset = (256.0, 0.0);
-
-    let mut drag_controller = DragController::new();
-    let mut drag_last_pos: [f64; 2] = [0.0, 0.0];
-    let mut mouse_pos: [f64; 2] = [0.0, 0.0];
-
-    while let Some(e) = window.next() {
-        if let Some(r) = e.render_args() {
-            graphics.render(&r);
         }
-
-        drag_controller.event(&e, |action| {
-            match action {
-                Drag::Start(x, y) => {
-                    drag_last_pos = [x, y];
-                    true
-                }
-                Drag::Move(x, y) => {
-                    graphics.offset.0 += x - drag_last_pos[0];
-                    graphics.offset.1 += y - drag_last_pos[1];
-                    drag_last_pos = [x, y];
-                    true
-                }
-                Drag::End(_, _) => false,
-                Drag::Interrupt => true,
-            }
-        });
-
-        if let Some(s) = e.mouse_cursor_args() {
-            mouse_pos = s;
-        }
-       
-        if let Some(s) = e.mouse_scroll_args() {
-            let x_centre = (mouse_pos[0] - graphics.offset.0) / graphics.scale;
-            let y_centre = (mouse_pos[1] - graphics.offset.1) / graphics.scale;
-            if s[1] == 1.0 { // zoom in
-                graphics.offset.0 = graphics.offset.0 - (x_centre * graphics.scale);
-                graphics.offset.1 = graphics.offset.1 - (y_centre * graphics.scale);
-                graphics.scale *= 2.0;
-            } else if s[1] == -1.0 { // zoom out
-                graphics.offset.0 = graphics.offset.0 + (x_centre * graphics.scale) / 2.0;
-                graphics.offset.1 = graphics.offset.1 + (y_centre * graphics.scale) / 2.0;
-                graphics.scale /= 2.0;
-            }
-        }
-
-        if let Some(Button::Keyboard(Key::Space)) = e.press_args() {
-
-            let x_centre = (mouse_pos[0] - graphics.offset.0) / graphics.scale;
-            let y_centre = (mouse_pos[1] - graphics.offset.1) / graphics.scale;
-
-            let (iso_x_centre, iso_y_centre) = graphics.projection.to_world(x_centre, y_centre);
-
-
-            graphics.rotate();
-
-            let (x_centre_new, y_centre_new) = graphics.projection.to_isometric(iso_x_centre, iso_y_centre, 0.0);
-
-
-            graphics.offset.0 = graphics.scale * (x_centre - x_centre_new) + graphics.offset.0;
-            graphics.offset.1 = graphics.scale * (y_centre - y_centre_new) + graphics.offset.1;
-
-            graphics.update_primitives();
-        }
-
     }
+
+    let mut engine = IsometricEngine::new("Isometric", 1024, 1024, vertices);
+    
+    engine.run();
+    
 }
 
-
-pub fn create_window() -> PistonWindow {
-
-        WindowSettings::new(
-            WINDOW_TITLE,
-            [512, 512]
-        )
-        .opengl(OPENGL)
-        .vsync(false)
-        .exit_on_esc(true)
-        .samples(4)
-        .build()
-        .unwrap()
-}
