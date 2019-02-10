@@ -5,7 +5,7 @@ use downhill_map::DIRECTIONS;
 #[derive(Debug, PartialEq)]
 pub struct FlowMap {
     width: i32,
-    flow: Vec<Vec<u32>>,
+    flow: na::DMatrix<u32>,
 }
 
 impl FlowMap {
@@ -13,12 +13,12 @@ impl FlowMap {
     fn new(width: i32) -> FlowMap {
         FlowMap{
             width,
-            flow: vec![vec![0; width as usize]; width as usize],
+            flow: na::DMatrix::zeros(width as usize, width as usize),
         }
     }
 
     pub fn get_flow(&self, x: i32, y: i32) -> u32 {
-        self.flow[x as usize][y as usize]
+        self.flow[(x as usize, y as usize)]
     }
 
     pub fn from(mesh: &Mesh, downhill_map: &Box<SingleDownhillMap>) -> FlowMap {
@@ -30,7 +30,7 @@ impl FlowMap {
     fn rain_on(&mut self, mesh: &Mesh, downhill_map: &Box<SingleDownhillMap>, x: i32, y: i32) {
         let mut focus = (x, y);
         while mesh.in_bounds(focus.0, focus.1) {
-            self.flow[focus.0 as usize][focus.1 as usize] += 1;
+            self.flow[(focus.0 as usize, focus.1 as usize)] += 1;
             let direction = DIRECTIONS[downhill_map.get_direction(focus.0, focus.1)];
             focus = (focus.0 + direction.0, focus.1 + direction.1);
         }
@@ -69,12 +69,12 @@ mod tests {
         let mut flow_map = FlowMap::new(4);
         flow_map.rain_on(&mesh, &downhill_map, 2, 1);
 
-        let expected = vec![
-            vec![0, 0, 0, 0],
-            vec![0, 1, 1, 1],
-            vec![0, 1, 0, 0],
-            vec![0, 0, 0, 0]
-        ];
+        let expected = na::DMatrix::from_row_slice(4, 4, &[
+            0, 0, 0, 0,
+            0, 1, 1, 1,
+            0, 1, 0, 0,
+            0, 0, 0, 0
+        ]);
         let expected = FlowMap{
             width: 4,
             flow: expected
@@ -98,12 +98,12 @@ mod tests {
 
         let flow_map = FlowMap::from(&mesh, &downhill_map);
 
-        let expected = vec![
-            vec![1, 2, 3, 4],
-            vec![3, 6, 9, 12],
-            vec![2, 2, 2, 2],
-            vec![1, 1, 1, 1]
-        ];
+        let expected = na::DMatrix::from_row_slice(4, 4, &[
+            1, 2, 3, 4,
+            3, 6, 9, 12,
+            2, 2, 2, 2,
+            1, 1, 1, 1
+        ]);
         let expected = FlowMap{
             width: 4,
             flow: expected

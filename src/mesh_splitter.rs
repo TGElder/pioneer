@@ -167,11 +167,11 @@ mod tests {
     fn test_split_process_new() {
         let mut mesh = Mesh::new(3, 0.0);
 
-        let z = vec![
-            vec![0.8, 0.3, 0.2],
-            vec![0.9, 0.7, 0.4],
-            vec![0.1, 0.5, 0.6],
-        ];
+        let z = na::DMatrix::from_row_slice(3, 3, &[
+            0.8, 0.3, 0.2,
+            0.9, 0.7, 0.4,
+            0.1, 0.5, 0.6
+        ]);
 
         mesh.set_z_vector(z);
 
@@ -265,11 +265,11 @@ mod tests {
     fn test_split_process_complete() {
         let mut mesh = Mesh::new(3, 0.0);
 
-        let z = vec![
-            vec![0.8, 0.3, 0.2],
-            vec![0.9, 0.7, 0.4],
-            vec![0.1, 0.5, 0.6],
-        ];
+        let z = na::DMatrix::from_row_slice(3, 3, &[
+            0.8, 0.3, 0.2,
+            0.9, 0.7, 0.4,
+            0.1, 0.5, 0.6
+        ]);
 
         mesh.set_z_vector(z);
 
@@ -293,7 +293,10 @@ mod tests {
     fn test_mesh_splitter_split() {
         let mut mesh = Mesh::new(2, 0.0);
 
-        let z = vec![vec![0.1, 0.2], vec![0.3, 0.4]];
+        let z = na::DMatrix::from_row_slice(2, 2, &[
+            0.1, 0.2,
+            0.3, 0.4
+        ]);
 
         mesh.set_z_vector(z);
 

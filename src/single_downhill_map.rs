@@ -25,7 +25,7 @@ impl SingleDownhillMap for MockDownhillMap {
 
 pub struct RandomDownhillMap {
     width: i32,
-    directions: Vec<Vec<u8>>,
+    directions: na::DMatrix<u8>,
 }
 
 impl RandomDownhillMap {
@@ -34,7 +34,7 @@ impl RandomDownhillMap {
             panic!("Not all cells have downhill");
         }
         let width = downhill_map.get_width();
-        let mut directions = vec![vec![0; width as usize]; width as usize];
+        let mut directions = na::DMatrix::zeros(width as usize, width as usize);
         for x in 0..width {
             for y in 0..width {
                 
@@ -46,7 +46,7 @@ impl RandomDownhillMap {
                         .map(|(index, _)| index as u8)
                         .collect();
 
-                directions[x as usize][y as usize] = *candidates.choose(&mut *rng).unwrap();
+                directions[(x as usize, y as usize)] = *candidates.choose(&mut *rng).unwrap();
             }
         }
         RandomDownhillMap {
@@ -64,7 +64,7 @@ impl RandomDownhillMap {
 
 impl SingleDownhillMap for RandomDownhillMap {
     fn get_direction(&self, x: i32, y: i32) -> usize {
-        self.directions[x as usize][y as usize] as usize
+        self.directions[(x as usize, y as usize)] as usize
     }
 }
 
@@ -77,12 +77,12 @@ mod tests {
     #[test]
     fn random_downhill_map_should_contain_downhill_directions() {
         let mut mesh = Mesh::new(4, 0.0);
-        let z = vec![
-            vec![0.3, 0.8, 0.7, 0.6],
-            vec![0.4, 0.9, 0.4, 0.5],
-            vec![0.5, 0.8, 0.3, 0.2],
-            vec![0.6, 0.7, 0.6, 0.1]
-        ];
+        let z = na::DMatrix::from_row_slice(4, 4, &[
+            0.3, 0.8, 0.7, 0.6,
+            0.4, 0.9, 0.4, 0.5,
+            0.5, 0.8, 0.3, 0.2,
+            0.6, 0.7, 0.6, 0.1
+        ]);
         mesh.set_z_vector(z);
 
         let downhill_map = DownhillMap::new(&mesh);

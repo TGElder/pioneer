@@ -12,6 +12,7 @@ pub mod world;
 
 extern crate rand;
 extern crate isometric;
+extern crate nalgebra as na;
 
 use mesh::Mesh;
 use mesh_splitter::MeshSplitter;
@@ -63,7 +64,7 @@ fn main() {
                 c.0, c.1, c.2,
                 d.0, d.1, d.2,
                 d.0, d.1, d.2,
-                a.0, a.1, a.2
+                a.0, a.1, a.2   
             ].iter().cloned());
         }
     }
@@ -71,6 +72,6 @@ fn main() {
     let mut engine = IsometricEngine::new("Isometric", 1024, 1024, triangle_vertices, line_vertices);
     
     engine.run();
-    
+   
 }
 
