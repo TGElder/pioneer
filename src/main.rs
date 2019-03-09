@@ -29,7 +29,7 @@ fn main() {
     let seed = 3;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
-    for i in 0..9 {
+    for i in 0..11 {
         mesh = MeshSplitter::split(&mesh, &mut rng, (0.1, 0.9));
         if i < 9 {
             let threshold = i * i;
@@ -43,7 +43,7 @@ fn main() {
     
     let terrain = mesh.get_z_vector().map(|z| z as f32);
 
-    let mut engine = IsometricEngine::new("Isometric", 1024, 1024, terrain, max_z as f32);
+    let mut engine = IsometricEngine::new("Isometric", 1024, 1024, max_z as f32, terrain);
     
     engine.run();
    
