@@ -25,12 +25,12 @@ use isometric::engine::IsometricEngine;
 fn main() {
 
     let mut mesh = Mesh::new(1, 0.0);
-    mesh.set_z(0, 0, MAX);
+    mesh.set_z(0, 0, 1.0);
     let seed = 2;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
     for i in 0..9 {
-        mesh = MeshSplitter::split(&mesh, &mut rng, (0.05, 0.5));
+        mesh = MeshSplitter::split(&mesh, &mut rng, (0.05, 0.9));
         if i < 9 {
             let threshold = i * 2;
             mesh = Erosion::erode(mesh, &mut rng, threshold, 8);
@@ -38,11 +38,11 @@ fn main() {
         println!("{}-{}", i, mesh.get_width());
     }
     
-    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 1.0)));
+    mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 32.0)));
     
     let terrain = mesh.get_z_vector().map(|z| z as f32);
 
-    let mut engine = IsometricEngine::new("Isometric", 1024, 1024, terrain);
+    let mut engine = IsometricEngine::new("Isometric", 512, 256, 32.0, terrain);
     
     engine.run();
    

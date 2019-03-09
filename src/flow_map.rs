@@ -56,10 +56,9 @@ mod tests {
     pub fn test_rain_on() {
         let mesh = Mesh::new(4, 0.0);
 
-
         let directions = vec![
-            vec![6, 6, 6, 6],
-            vec![6, 6, 6, 6],
+            vec![3, 3, 3, 3],
+            vec![3, 3, 3, 3],
             vec![0, 0, 0, 0],
             vec![0, 0, 0, 0]
         ];
@@ -88,8 +87,8 @@ mod tests {
         let mesh = Mesh::new(4, 0.0);
 
         let directions = vec![
-            vec![6, 6, 6, 6],
-            vec![6, 6, 6, 6],
+            vec![3, 3, 3, 3],
+            vec![3, 3, 3, 3],
             vec![0, 0, 0, 0],
             vec![0, 0, 0, 0]
         ];

@@ -49,7 +49,6 @@ impl SplitProcess {
                 let zs = [
                     mesh.get_z(x + dx, y),
                     mesh.get_z(x, y + dy),
-                    mesh.get_z(x + dx, y + dy),
                     z,
                 ];
                 let min_z = zs.iter().min_by(float_ordering).unwrap();
@@ -175,17 +174,38 @@ mod tests {
 
         mesh.set_z_vector(z);
 
-        let expected = SplitProcess {
+        let expected_1 = SplitProcess {
             split_rules: vec![
                 SplitRule {
-                    x: 3,
+                    x: 2,
                     y: 2,
-                    range: (0.1, 0.7),
+                    range: (0.3, 0.7),
                 },
                 SplitRule {
                     x: 2,
                     y: 3,
-                    range: (0.2, 0.7),
+                    range: (0.3, 0.7),
+                },
+                SplitRule {
+                    x: 3,
+                    y: 3,
+                    range: (0.4, 0.7),
+                },
+                SplitRule {
+                    x: 3,
+                    y: 2,
+                    range: (0.5, 0.7),
+                },
+            ],
+            splits: vec![],
+        };
+
+        let expected_2 = SplitProcess {
+            split_rules: vec![
+                SplitRule {
+                    x: 2,
+                    y: 3,
+                    range: (0.3, 0.7),
                 },
                 SplitRule {
                     x: 2,
@@ -197,11 +217,18 @@ mod tests {
                     y: 3,
                     range: (0.4, 0.7),
                 },
+                SplitRule {
+                    x: 3,
+                    y: 2,
+                    range: (0.5, 0.7),
+                },
             ],
             splits: vec![],
         };
 
-        assert_eq!(SplitProcess::new(&mesh, 1, 1), expected);
+        let actual = SplitProcess::new(&mesh, 1, 1);
+
+        assert_eq!(actual == expected_1 || actual == expected_2, true);
     }
 
     #[test]

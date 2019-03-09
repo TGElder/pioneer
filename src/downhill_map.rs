@@ -1,27 +1,23 @@
 use mesh::Mesh;
 
-pub const DIRECTIONS: [(i32, i32); 8] = [
+pub const DIRECTIONS: [(i32, i32); 4] = [
     (-1, 0),
-    (-1, -1),
     (0, -1),
-    (1, -1),
     (1, 0),
-    (1, 1),
     (0, 1),
-    (-1, 1),
 ];
 
 #[derive(Debug, PartialEq)]
 pub struct DownhillMap {
     width: i32,
-    directions: na::DMatrix<[bool; 8]>,
+    directions: na::DMatrix<[bool; 4]>,
 }
 
 impl DownhillMap {
     pub fn new(mesh: &Mesh) -> DownhillMap {
         let mut out = DownhillMap {
             width: mesh.get_width(),
-            directions: na::DMatrix::repeat(mesh.get_width() as usize, mesh.get_width() as usize, [false; 8]),
+            directions: na::DMatrix::repeat(mesh.get_width() as usize, mesh.get_width() as usize, [false; 4]),
         };
         out.compute_all_directions(mesh);
         out
@@ -31,17 +27,17 @@ impl DownhillMap {
         self.width
     }
 
-    pub fn get_directions(&self, x: i32, y: i32) -> [bool; 8] {
+    pub fn get_directions(&self, x: i32, y: i32) -> [bool; 4] {
         self.directions[(x as usize, y as usize)]
     }
 
-    fn set_directions(&mut self, x: i32, y: i32, directions: [bool; 8]) {
+    fn set_directions(&mut self, x: i32, y: i32, directions: [bool; 4]) {
         self.directions[(x as usize, y as usize)] = directions;
     }
 
-    fn compute_directions(mesh: &Mesh, x: i32, y: i32) -> [bool; 8] {
+    fn compute_directions(mesh: &Mesh, x: i32, y: i32) -> [bool; 4] {
         let z = mesh.get_z(x, y);
-        let mut out = [false; 8];
+        let mut out = [false; 4];
         for d in 0..DIRECTIONS.len() {
             let dx = DIRECTIONS[d].0;
             let dy = DIRECTIONS[d].1;
@@ -94,7 +90,7 @@ mod tests {
             0.6, 0.4, 0.7
         ]));
 
-        let expected = [false, true, true, false, true, false, false, true];
+        let expected = [false, true, true, false];
         let actual = DownhillMap::compute_directions(&mesh, 1, 1);
 
         assert_eq!(actual, expected);
@@ -111,10 +107,10 @@ mod tests {
         let expected = DownhillMap {
             width: 2,
             directions: na::DMatrix::from_row_slice(2, 2, &[
-                [true, true, true, true, false, false, false, true],
-                [true, true, true, false, false, true, true, true],
-                [true, true, true, true, true, true, false, true],
-                [true, true, true, true, true, true, true, true]
+                [true, true, false, false],
+                [true, true, false, true],
+                [true, true, true, false],
+                [true, true, true, true]
             ]),
         };
 
