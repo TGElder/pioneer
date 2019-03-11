@@ -22,7 +22,7 @@ impl Erosion {
                     if !eroded[x as usize][y as usize] {
                         let flow = flow_map.get_flow(x, y);
                         if flow > 1 && flow > threshold {
-                            let after = mesh.get_z(x, y) * 0.85;
+                            let after = mesh.get_z(x, y) * 0.9;
                             mesh.set_z(x, y, after);
                             eroded[x as usize][y as usize] = true;
                         }
