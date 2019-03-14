@@ -21,6 +21,10 @@ impl FlowMap {
         self.flow[(x as usize, y as usize)]
     }
 
+    pub fn get_max_flow(&self) -> u32 {
+       *self.flow.iter().max().unwrap()
+    }
+
     pub fn from(mesh: &Mesh, downhill_map: &Box<SingleDownhillMap>) -> FlowMap {
         let mut out = FlowMap::new(mesh.get_width());
         out.rain_on_all(mesh, downhill_map);
@@ -109,6 +113,21 @@ mod tests {
         };
 
         assert_eq!(flow_map, expected);
+    }
+
+    #[test]
+    pub fn test_max_flow() {
+        let flow = na::DMatrix::from_row_slice(4, 4, &[
+            1, 9, 4, 10,
+            14, 12, 5, 11,
+            7, 2, 16, 8,
+            13, 3, 15, 6
+        ]);
+        let flow_map = FlowMap{
+            width: 4,
+            flow
+        };
+        assert_eq!(flow_map.get_max_flow(), 16);
     }
 
 
