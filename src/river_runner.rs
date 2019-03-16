@@ -65,6 +65,8 @@ fn get_rivers_from_flow_map(mesh: &Mesh, downhill_map: &Box<SingleDownhillMap>, 
     for tuple in tuples.iter_mut() {
         rivers.push(River::new(tuple.0, tuple.1, flow_scale.scale(tuple.2) as f32));
     }
+
+    rivers
 }
 
 #[cfg(test)]
@@ -103,8 +105,11 @@ mod tests {
             ]),
         };
 
-        let expeced = vec![
-            River::new(na::Vector2::new(3, 0), na::Vector2::new())
-        ]
+        let rivers = get_rivers_from_flow_map(&mesh, &downhill_map, &flow_map);
+
+        assert!(rivers.contains(&River::new(na::Vector2::new(3, 0), na::Vector2::new(2, 0), 4.0)));
+        assert!(rivers.contains(&River::new(na::Vector2::new(2, 0), na::Vector2::new(1, 0), 3.0)));
+        assert!(rivers.contains(&River::new(na::Vector2::new(3, 1), na::Vector2::new(2, 1), 12.0)));
+        assert!(rivers.contains(&River::new(na::Vector2::new(2, 1), na::Vector2::new(1, 1), 9.0)));
     }
 }
