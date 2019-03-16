@@ -4,16 +4,14 @@ use downhill_map::DIRECTIONS;
 
 #[derive(Debug, PartialEq)]
 pub struct FlowMap {
-    width: i32,
     flow: na::DMatrix<u32>,
 }
 
 impl FlowMap {
 
-    fn new(width: i32) -> FlowMap {
+    pub fn new(width: usize) -> FlowMap {
         FlowMap{
-            width,
-            flow: na::DMatrix::zeros(width as usize, width as usize),
+            flow: na::DMatrix::zeros(width, width),
         }
     }
 
@@ -21,12 +19,20 @@ impl FlowMap {
         self.flow[(x as usize, y as usize)]
     }
 
+    pub fn get_flow_matrix(&self) -> &na::DMatrix<u32> {
+        &self.flow
+    }
+
     pub fn get_max_flow(&self) -> u32 {
        *self.flow.iter().max().unwrap()
     }
 
+    pub fn set_flow(&mut self, flow: na::DMatrix<u32>) {
+        self.flow = flow;
+    }
+
     pub fn from(mesh: &Mesh, downhill_map: &Box<SingleDownhillMap>) -> FlowMap {
-        let mut out = FlowMap::new(mesh.get_width());
+        let mut out = FlowMap::new(mesh.get_width() as usize);
         out.rain_on_all(mesh, downhill_map);
         out
     }
@@ -79,7 +85,6 @@ mod tests {
             0, 0, 0, 0
         ]);
         let expected = FlowMap{
-            width: 4,
             flow: expected
         };
 
@@ -108,7 +113,6 @@ mod tests {
             1, 1, 1, 1
         ]);
         let expected = FlowMap{
-            width: 4,
             flow: expected
         };
 
@@ -124,7 +128,6 @@ mod tests {
             13, 3, 15, 6
         ]);
         let flow_map = FlowMap{
-            width: 4,
             flow
         };
         assert_eq!(flow_map.get_max_flow(), 16);
