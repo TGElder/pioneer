@@ -82,8 +82,10 @@ fn get_rivers_from_flow_map(
             if flow >= threshold && mesh.get_z(x, y) >= sea_level {
                 let position = na::Vector2::new(x as usize, y as usize);
                 if let Some(neighbour) = get_neighbour(position, mesh, downhill_map) {
-                    let width = flow_scale.scale(flow as f64) as f32;
-                    out.push(River::new(position, neighbour, width));
+                    let neighbour_flow = flow_map.get_flow(neighbour.x as i32, neighbour.y as i32);
+                    let from_width = flow_scale.scale(flow as f64) as f32;
+                    let to_width = flow_scale.scale(neighbour_flow as f64) as f32;
+                    out.push(River::new(position, neighbour, from_width, to_width));
                 }
             }
         }
@@ -124,7 +126,7 @@ mod tests {
     fn flow_map() -> FlowMap {
         let mut flow_map = FlowMap::new(4);
         flow_map.set_flow(na::DMatrix::from_row_slice(4, 4, &[
-                1, 2, 5, 6,
+                1, 2, 5, 7,
                 3, 7, 9, 12,
                 2, 2, 2, 2,
                 1, 1, 1, 1
@@ -134,29 +136,31 @@ mod tests {
     }
 
     #[test]
-    pub fn test_get_downhill() {
+    fn test_get_downhill() {
         let position = na::Vector2::new(1, 2);
         assert_eq!(get_neighbour(position, &mesh(), &downhill_map()), Some(na::Vector2::new(1, 3)));
     }
 
     #[test]
-    pub fn test_get_downhill_out_of_bounds() {
+    fn test_get_downhill_out_of_bounds() {
         let position = na::Vector2::new(1, 3);
         assert_eq!(get_neighbour(position, &mesh(), &downhill_map()), None);
     }
 
     #[test]
-    pub fn test_get_max_flow_over_sea_level() {
+    fn test_get_max_flow_over_sea_level() {
         assert_eq!(get_max_flow_over_sea_level(&mesh(), 0.5, &flow_map()), 7);
     }
 
     #[test]
-    pub fn test_get_rivers_from_flow_map() {
+    fn test_get_rivers_from_flow_map() {
         let rivers = get_rivers_from_flow_map(&mesh(), 3, 0.5, (0.0, 1.0), &downhill_map(), &flow_map());
 
-        assert!(rivers.contains(&River::new(na::Vector2::new(1, 0), na::Vector2::new(1, 1), 0.0)));
-        assert!(rivers.contains(&River::new(na::Vector2::new(1, 1), na::Vector2::new(1, 2), 1.0)));
-        assert!(rivers.contains(&River::new(na::Vector2::new(0, 2), na::Vector2::new(0, 3), 0.5)));
+        println!("{:?}", rivers);
+
+        assert!(rivers.contains(&River::new(na::Vector2::new(1, 0), na::Vector2::new(1, 1), 0.0, 1.0)));
+        assert!(rivers.contains(&River::new(na::Vector2::new(1, 1), na::Vector2::new(1, 2), 1.0, 1.5)));
+        assert!(rivers.contains(&River::new(na::Vector2::new(0, 2), na::Vector2::new(0, 3), 0.5, 1.0)));
         assert_eq!(rivers.len(), 3);
     }
 }
