@@ -31,7 +31,7 @@ fn main() {
     let seed = 7;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
-    for i in 0..10 {
+    for i in 0..9 {
         mesh = MeshSplitter::split(&mesh, &mut rng, (0.0, 0.75));
         if i < 9 {
             let threshold = i * 2;
@@ -41,7 +41,7 @@ fn main() {
     }
 
     let sea_level = 3.0;
-    let rivers = get_rivers(&mesh, 256, sea_level, (0.05, 0.99), &mut rng);
+    let rivers = get_rivers(&mesh, 256, sea_level, (0.01, 0.49), &mut rng);
 
     mesh = mesh.rescale(&Scale::new((mesh.get_min_z(), mesh.get_max_z()), (0.0, 32.0)));
     let terrain = mesh.get_z_vector().map(|z| z as f32);

@@ -6,6 +6,7 @@ use isometric::graphics::drawing::terrain::River;
 use scale::Scale;
 use downhill_map::DIRECTIONS;
 use rand::prelude::*;
+use isometric::graphics::engine::Color;
 
 pub fn get_rivers <R: Rng> (
     mesh: &Mesh, 
@@ -71,6 +72,8 @@ fn get_rivers_from_flow_map(
     flow_map: &FlowMap
 ) -> Vec<River> {
 
+    let blue = Color::new(0.0, 0.0, 1.0, 1.0);
+
     let mut out = vec![];
 
     let max_flow_over_sea_level = get_max_flow_over_sea_level(mesh, sea_level, flow_map) as f64;
@@ -85,7 +88,7 @@ fn get_rivers_from_flow_map(
                     let neighbour_flow = flow_map.get_flow(neighbour.x as i32, neighbour.y as i32);
                     let from_width = flow_scale.scale(flow as f64) as f32;
                     let to_width = flow_scale.scale(neighbour_flow as f64) as f32;
-                    out.push(River::new(position, neighbour, from_width, to_width));
+                    out.push(River::new(position, neighbour, from_width, to_width, blue));
                 }
             }
         }
