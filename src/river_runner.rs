@@ -89,8 +89,14 @@ fn get_junctions_and_rivers_from_flow_map(
                     let neighbour_flow = flow_map.get_flow(neighbour.x as i32, neighbour.y as i32);
                     let from_width = flow_scale.scale(flow as f64) as f32;
                     let to_width = flow_scale.scale(neighbour_flow as f64) as f32;
-                    junctions.push(Junction::new(position, from_width, from_width, blue));
-                    junctions.push(Junction::new(neighbour, to_width, to_width, blue));
+                    if position.x == neighbour.x {
+                        junctions.push(Junction::new(position, from_width, 0.0, blue));
+                        junctions.push(Junction::new(neighbour, to_width, 0.0, blue));
+                    } else {
+                        junctions.push(Junction::new(position, 0.0, from_width, blue));
+                        junctions.push(Junction::new(neighbour, 0.0, to_width, blue));
+                    }
+
                     rivers.push(River::new(position, neighbour, blue));
                 }
             }
@@ -168,13 +174,13 @@ mod tests {
         let blue = Color::new(0.0, 0.0, 1.0, 1.0);
 
         assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 0), 0.0, 0.0, blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 1), 1.0, 1.0, blue)));
+        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 1), 1.0, 0.0, blue)));
         assert!(rivers.contains(&River::new(na::Vector2::new(1, 0), na::Vector2::new(1, 1), blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 1), 1.0, 1.0, blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 2), 1.5, 1.5, blue)));
+        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 1), 1.0, 0.0, blue)));
+        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 2), 1.5, 0.0, blue)));
         assert!(rivers.contains(&River::new(na::Vector2::new(1, 1), na::Vector2::new(1, 2), blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(0, 2), 0.5, 0.5, blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(0, 3), 1.0, 1.0, blue)));
+        assert!(junctions.contains(&Junction::new(na::Vector2::new(0, 2), 0.5, 0.0, blue)));
+        assert!(junctions.contains(&Junction::new(na::Vector2::new(0, 3), 1.0, 0.0, blue)));
         assert!(rivers.contains(&River::new(na::Vector2::new(0, 2), na::Vector2::new(0, 3), blue)));
         assert_eq!(rivers.len(), 3);
         assert_eq!(junctions.len(), 6);
