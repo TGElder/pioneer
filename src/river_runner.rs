@@ -2,7 +2,7 @@ use mesh::Mesh;
 use downhill_map::DownhillMap;
 use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
 use flow_map::FlowMap;
-use isometric::graphics::drawing::terrain::{Junction, River};
+use isometric::graphics::drawing::terrain_old::{Junction, River};
 use scale::Scale;
 use downhill_map::DIRECTIONS;
 use rand::prelude::*;

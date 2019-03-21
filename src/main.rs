@@ -29,7 +29,7 @@ fn main() {
 
     let mut mesh = Mesh::new(1, 0.0);
     mesh.set_z(0, 0, MAX);
-    let seed = 12;
+    let seed = 16;
     let mut rng = Box::new(SmallRng::from_seed([seed; 16]));
 
     for i in 0..9 {
@@ -41,7 +41,7 @@ fn main() {
         println!("{}-{}", i, mesh.get_width());
     }
 
-    let sea_level = 1.0;
+    let sea_level = 0.5;
     let before_sea_level = Scale::new((0.0, 16.0), (mesh.get_min_z(), mesh.get_max_z())).scale(sea_level);
     let (junctions, rivers) = get_junctions_and_rivers(&mesh, 256, before_sea_level, (0.01, 0.49), &mut rng);
 
