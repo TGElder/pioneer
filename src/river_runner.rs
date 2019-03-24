@@ -2,7 +2,7 @@ use mesh::Mesh;
 use downhill_map::DownhillMap;
 use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
 use flow_map::FlowMap;
-use isometric::graphics::drawing::terrain_old::{Junction, River};
+use isometric::terrain::{Edge, Node};
 use scale::Scale;
 use downhill_map::DIRECTIONS;
 use rand::prelude::*;
@@ -14,7 +14,7 @@ pub fn get_junctions_and_rivers <R: Rng> (
     sea_level: f64,
     flow_to_width: (f64, f64),
     rng: &mut Box<R>,
-) -> (Vec<Junction>, Vec<River>) {
+) -> (Vec<Node>, Vec<Edge>) {
     let downhill_map = DownhillMap::new(&mesh);
     let random_downhill_map: Box<SingleDownhillMap> = Box::new(RandomDownhillMap::new(&downhill_map, rng));
 
@@ -27,7 +27,7 @@ fn get_junctions_and_rivers_from_downhill_map(
     sea_level: f64,
     flow_to_width: (f64, f64),
     downhill_map: &Box<SingleDownhillMap>
-) -> (Vec<Junction>, Vec<River>) {
+) -> (Vec<Node>, Vec<Edge>) {
    let flow_map = FlowMap::from(&mesh, &downhill_map);
    get_junctions_and_rivers_from_flow_map(&mesh, threshold, sea_level, flow_to_width, &downhill_map, &flow_map)
 }
@@ -70,10 +70,7 @@ fn get_junctions_and_rivers_from_flow_map(
     flow_to_width: (f64, f64),
     downhill_map: &Box<SingleDownhillMap>,
     flow_map: &FlowMap
-) -> (Vec<Junction>, Vec<River>) {
-
-    let blue = Color::new(0.0, 0.0, 1.0, 1.0);
-
+) -> (Vec<Node>, Vec<Edge>) {
     let mut junctions = vec![];
     let mut rivers = vec![];
 
@@ -90,14 +87,14 @@ fn get_junctions_and_rivers_from_flow_map(
                     let from_width = flow_scale.scale(flow as f64) as f32;
                     let to_width = flow_scale.scale(neighbour_flow as f64) as f32;
                     if position.x == neighbour.x {
-                        junctions.push(Junction::new(position, from_width, 0.0, blue));
-                        junctions.push(Junction::new(neighbour, to_width, 0.0, blue));
+                        junctions.push(Node::new(position, from_width, 0.0));
+                        junctions.push(Node::new(neighbour, to_width, 0.0));
                     } else {
-                        junctions.push(Junction::new(position, 0.0, from_width, blue));
-                        junctions.push(Junction::new(neighbour, 0.0, to_width, blue));
+                        junctions.push(Node::new(position, 0.0, from_width));
+                        junctions.push(Node::new(neighbour, 0.0, to_width));
                     }
 
-                    rivers.push(River::new(position, neighbour, blue));
+                    rivers.push(Edge::new(position, neighbour));
                 }
             }
         }
@@ -173,15 +170,15 @@ mod tests {
 
         let blue = Color::new(0.0, 0.0, 1.0, 1.0);
 
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 0), 0.0, 0.0, blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 1), 1.0, 0.0, blue)));
-        assert!(rivers.contains(&River::new(na::Vector2::new(1, 0), na::Vector2::new(1, 1), blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 1), 1.0, 0.0, blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(1, 2), 1.5, 0.0, blue)));
-        assert!(rivers.contains(&River::new(na::Vector2::new(1, 1), na::Vector2::new(1, 2), blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(0, 2), 0.5, 0.0, blue)));
-        assert!(junctions.contains(&Junction::new(na::Vector2::new(0, 3), 1.0, 0.0, blue)));
-        assert!(rivers.contains(&River::new(na::Vector2::new(0, 2), na::Vector2::new(0, 3), blue)));
+        assert!(junctions.contains(&Node::new(na::Vector2::new(1, 0), 0.0, 0.0)));
+        assert!(junctions.contains(&Node::new(na::Vector2::new(1, 1), 1.0, 0.0)));
+        assert!(rivers.contains(&Edge::new(na::Vector2::new(1, 0), na::Vector2::new(1, 1))));
+        assert!(junctions.contains(&Node::new(na::Vector2::new(1, 1), 1.0, 0.0)));
+        assert!(junctions.contains(&Node::new(na::Vector2::new(1, 2), 1.5, 0.0)));
+        assert!(rivers.contains(&Edge::new(na::Vector2::new(1, 1), na::Vector2::new(1, 2))));
+        assert!(junctions.contains(&Node::new(na::Vector2::new(0, 2), 0.5, 0.0)));
+        assert!(junctions.contains(&Node::new(na::Vector2::new(0, 3), 1.0, 0.0)));
+        assert!(rivers.contains(&Edge::new(na::Vector2::new(0, 2), na::Vector2::new(0, 3))));
         assert_eq!(rivers.len(), 3);
         assert_eq!(junctions.len(), 6);
     }
