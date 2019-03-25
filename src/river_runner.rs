@@ -6,7 +6,7 @@ use isometric::terrain::{Edge, Node};
 use scale::Scale;
 use downhill_map::DIRECTIONS;
 use rand::prelude::*;
-use isometric::graphics::engine::Color;
+use isometric::Color;
 
 pub fn get_junctions_and_rivers <R: Rng> (
     mesh: &Mesh, 
