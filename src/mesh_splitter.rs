@@ -46,11 +46,7 @@ impl SplitProcess {
                 let dx: i32 = (o.0 as i32 * 2) - 1;
                 let dy: i32 = (o.1 as i32 * 2) - 1;
                 let z = mesh.get_z(x, y);
-                let zs = [
-                    mesh.get_z(x + dx, y),
-                    mesh.get_z(x, y + dy),
-                    z,
-                ];
+                let zs = [mesh.get_z(x + dx, y), mesh.get_z(x, y + dy), z];
                 let min_z = zs.iter().min_by(float_ordering).unwrap();
 
                 SplitRule {
@@ -126,14 +122,18 @@ impl MeshSplitter {
         out
     }
 
-    pub fn split_n_times<R: Rng>(mesh: &Mesh, rng: &mut Box<R>, random_range: (f64, f64), times: u32) -> Mesh {
+    pub fn split_n_times<R: Rng>(
+        mesh: &Mesh,
+        rng: &mut Box<R>,
+        random_range: (f64, f64),
+        times: u32,
+    ) -> Mesh {
         let mut out = MeshSplitter::split(mesh, rng, random_range);
         for _ in 1..times {
             out = MeshSplitter::split(&out, rng, random_range);
         }
         out
     }
-        
 }
 
 #[cfg(test)]
@@ -166,11 +166,7 @@ mod tests {
     fn test_split_process_new() {
         let mut mesh = Mesh::new(3, 0.0);
 
-        let z = na::DMatrix::from_row_slice(3, 3, &[
-            0.8, 0.3, 0.2,
-            0.9, 0.7, 0.4,
-            0.1, 0.5, 0.6
-        ]);
+        let z = na::DMatrix::from_row_slice(3, 3, &[0.8, 0.3, 0.2, 0.9, 0.7, 0.4, 0.1, 0.5, 0.6]);
 
         mesh.set_z_vector(z);
 
@@ -292,11 +288,7 @@ mod tests {
     fn test_split_process_complete() {
         let mut mesh = Mesh::new(3, 0.0);
 
-        let z = na::DMatrix::from_row_slice(3, 3, &[
-            0.8, 0.3, 0.2,
-            0.9, 0.7, 0.4,
-            0.1, 0.5, 0.6
-        ]);
+        let z = na::DMatrix::from_row_slice(3, 3, &[0.8, 0.3, 0.2, 0.9, 0.7, 0.4, 0.1, 0.5, 0.6]);
 
         mesh.set_z_vector(z);
 
@@ -320,10 +312,7 @@ mod tests {
     fn test_mesh_splitter_split() {
         let mut mesh = Mesh::new(2, 0.0);
 
-        let z = na::DMatrix::from_row_slice(2, 2, &[
-            0.1, 0.2,
-            0.3, 0.4
-        ]);
+        let z = na::DMatrix::from_row_slice(2, 2, &[0.1, 0.2, 0.3, 0.4]);
 
         mesh.set_z_vector(z);
 

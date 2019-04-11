@@ -1,35 +1,49 @@
-use mesh::Mesh;
 use downhill_map::DownhillMap;
-use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
+use downhill_map::DIRECTIONS;
 use flow_map::FlowMap;
 use isometric::terrain::{Edge, Node};
-use scale::Scale;
-use downhill_map::DIRECTIONS;
-use rand::prelude::*;
 use isometric::Color;
+use mesh::Mesh;
+use rand::prelude::*;
+use scale::Scale;
+use single_downhill_map::{RandomDownhillMap, SingleDownhillMap};
 
-pub fn get_junctions_and_rivers <R: Rng> (
-    mesh: &Mesh, 
+pub fn get_junctions_and_rivers<R: Rng>(
+    mesh: &Mesh,
     threshold: u32,
     sea_level: f64,
     flow_to_width: (f64, f64),
     rng: &mut Box<R>,
 ) -> (Vec<Node>, Vec<Edge>) {
     let downhill_map = DownhillMap::new(&mesh);
-    let random_downhill_map: Box<SingleDownhillMap> = Box::new(RandomDownhillMap::new(&downhill_map, rng));
+    let random_downhill_map: Box<SingleDownhillMap> =
+        Box::new(RandomDownhillMap::new(&downhill_map, rng));
 
-    get_junctions_and_rivers_from_downhill_map(&mesh, threshold, sea_level, flow_to_width, &random_downhill_map)
+    get_junctions_and_rivers_from_downhill_map(
+        &mesh,
+        threshold,
+        sea_level,
+        flow_to_width,
+        &random_downhill_map,
+    )
 }
 
 fn get_junctions_and_rivers_from_downhill_map(
     mesh: &Mesh,
-    threshold:u32,
+    threshold: u32,
     sea_level: f64,
     flow_to_width: (f64, f64),
-    downhill_map: &Box<SingleDownhillMap>
+    downhill_map: &Box<SingleDownhillMap>,
 ) -> (Vec<Node>, Vec<Edge>) {
-   let flow_map = FlowMap::from(&mesh, &downhill_map);
-   get_junctions_and_rivers_from_flow_map(&mesh, threshold, sea_level, flow_to_width, &downhill_map, &flow_map)
+    let flow_map = FlowMap::from(&mesh, &downhill_map);
+    get_junctions_and_rivers_from_flow_map(
+        &mesh,
+        threshold,
+        sea_level,
+        flow_to_width,
+        &downhill_map,
+        &flow_map,
+    )
 }
 
 fn get_neighbour(
@@ -47,16 +61,12 @@ fn get_neighbour(
     }
 }
 
-fn get_max_flow_over_sea_level(
-    mesh: &Mesh,
-    sea_level: f64,
-    flow_map: &FlowMap,
-) -> u32 {
+fn get_max_flow_over_sea_level(mesh: &Mesh, sea_level: f64, flow_map: &FlowMap) -> u32 {
     let mut out = 0;
     for x in 0..mesh.get_width() {
-       for y in 0..mesh.get_width() {
-           if mesh.get_z(x, y) >= sea_level {
-               out = out.max(flow_map.get_flow(x, y));
+        for y in 0..mesh.get_width() {
+            if mesh.get_z(x, y) >= sea_level {
+                out = out.max(flow_map.get_flow(x, y));
             }
         }
     }
@@ -69,7 +79,7 @@ fn get_junctions_and_rivers_from_flow_map(
     sea_level: f64,
     flow_to_width: (f64, f64),
     downhill_map: &Box<SingleDownhillMap>,
-    flow_map: &FlowMap
+    flow_map: &FlowMap,
 ) -> (Vec<Node>, Vec<Edge>) {
     let mut junctions = vec![];
     let mut rivers = vec![];
@@ -99,7 +109,7 @@ fn get_junctions_and_rivers_from_flow_map(
             }
         }
     }
-    
+
     (junctions, rivers)
 }
 
@@ -111,12 +121,13 @@ mod tests {
 
     fn mesh() -> Mesh {
         let mut mesh = Mesh::new(4, 0.0);
-        let z = na::DMatrix::from_row_slice(4, 4, &[
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 0.0, 0.0,
-            1.0, 1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 1.0,
-        ]);
+        let z = na::DMatrix::from_row_slice(
+            4,
+            4,
+            &[
+                1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+            ],
+        );
         mesh.set_z_vector(z);
         mesh
     }
@@ -126,7 +137,7 @@ mod tests {
             vec![3, 3, 3, 3],
             vec![3, 3, 3, 3],
             vec![0, 0, 0, 0],
-            vec![0, 0, 0, 0]
+            vec![0, 0, 0, 0],
         ];
         let downhill_map = MockDownhillMap::new(downhill_map);
         Box::new(downhill_map)
@@ -134,20 +145,21 @@ mod tests {
 
     fn flow_map() -> FlowMap {
         let mut flow_map = FlowMap::new(4);
-        flow_map.set_flow(na::DMatrix::from_row_slice(4, 4, &[
-                1, 2, 5, 7,
-                3, 7, 9, 12,
-                2, 2, 2, 2,
-                1, 1, 1, 1
-            ]),
-        );
+        flow_map.set_flow(na::DMatrix::from_row_slice(
+            4,
+            4,
+            &[1, 2, 5, 7, 3, 7, 9, 12, 2, 2, 2, 2, 1, 1, 1, 1],
+        ));
         flow_map
     }
 
     #[test]
     fn test_get_downhill() {
         let position = na::Vector2::new(1, 2);
-        assert_eq!(get_neighbour(position, &mesh(), &downhill_map()), Some(na::Vector2::new(1, 3)));
+        assert_eq!(
+            get_neighbour(position, &mesh(), &downhill_map()),
+            Some(na::Vector2::new(1, 3))
+        );
     }
 
     #[test]
@@ -163,7 +175,14 @@ mod tests {
 
     #[test]
     fn test_get_junctions_and_rivers_from_flow_map() {
-        let (junctions, rivers) = get_junctions_and_rivers_from_flow_map(&mesh(), 3, 0.5, (0.0, 1.0), &downhill_map(), &flow_map());
+        let (junctions, rivers) = get_junctions_and_rivers_from_flow_map(
+            &mesh(),
+            3,
+            0.5,
+            (0.0, 1.0),
+            &downhill_map(),
+            &flow_map(),
+        );
 
         println!("{:?}", rivers);
         println!("{:?}", junctions);

@@ -1,16 +1,13 @@
-use mesh::Mesh;
 use downhill_map::DownhillMap;
-use single_downhill_map::{SingleDownhillMap, RandomDownhillMap};
 use flow_map::FlowMap;
+use mesh::Mesh;
 use rand::prelude::*;
+use single_downhill_map::{RandomDownhillMap, SingleDownhillMap};
 
-pub struct Erosion {
-
-}
+pub struct Erosion {}
 
 impl Erosion {
-
-    pub fn erode<R: Rng> (mut mesh: Mesh, rng: &mut Box<R>, threshold: u32, samples: usize) -> Mesh {
+    pub fn erode<R: Rng>(mut mesh: Mesh, rng: &mut Box<R>, threshold: u32, samples: usize) -> Mesh {
         let downhill_map = DownhillMap::new(&mesh);
         let mut eroded = vec![vec![false; mesh.get_width() as usize]; mesh.get_width() as usize];
         for _ in 0..samples {
@@ -32,5 +29,4 @@ impl Erosion {
         }
         mesh
     }
-
 }

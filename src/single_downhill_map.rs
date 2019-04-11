@@ -11,9 +11,7 @@ pub struct MockDownhillMap {
 
 impl MockDownhillMap {
     pub fn new(directions: Vec<Vec<usize>>) -> MockDownhillMap {
-        MockDownhillMap{
-            directions
-        }
+        MockDownhillMap { directions }
     }
 }
 
@@ -29,7 +27,7 @@ pub struct RandomDownhillMap {
 }
 
 impl RandomDownhillMap {
-    pub fn new <R: Rng> (downhill_map: &DownhillMap, rng: &mut Box<R>) -> RandomDownhillMap {
+    pub fn new<R: Rng>(downhill_map: &DownhillMap, rng: &mut Box<R>) -> RandomDownhillMap {
         if !downhill_map.all_cells_have_downhill() {
             panic!("Not all cells have downhill");
         }
@@ -37,29 +35,23 @@ impl RandomDownhillMap {
         let mut directions = na::DMatrix::zeros(width as usize, width as usize);
         for x in 0..width {
             for y in 0..width {
-                
-                let candidates: Vec<u8> = 
-                    downhill_map.get_directions(x, y)
-                        .iter()
-                        .enumerate()
-                        .filter(|(_, downhill)| **downhill)
-                        .map(|(index, _)| index as u8)
-                        .collect();
+                let candidates: Vec<u8> = downhill_map
+                    .get_directions(x, y)
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, downhill)| **downhill)
+                    .map(|(index, _)| index as u8)
+                    .collect();
 
                 directions[(x as usize, y as usize)] = *candidates.choose(&mut *rng).unwrap();
             }
         }
-        RandomDownhillMap {
-            width,
-            directions
-        }
+        RandomDownhillMap { width, directions }
     }
 
     pub fn get_width(&self) -> i32 {
         self.width
     }
-
-    
 }
 
 impl SingleDownhillMap for RandomDownhillMap {
@@ -77,12 +69,13 @@ mod tests {
     #[test]
     fn random_downhill_map_should_contain_downhill_directions() {
         let mut mesh = Mesh::new(4, 0.0);
-        let z = na::DMatrix::from_row_slice(4, 4, &[
-            0.3, 0.8, 0.7, 0.6,
-            0.4, 0.9, 0.4, 0.5,
-            0.5, 0.8, 0.3, 0.2,
-            0.6, 0.7, 0.6, 0.1
-        ]);
+        let z = na::DMatrix::from_row_slice(
+            4,
+            4,
+            &[
+                0.3, 0.8, 0.7, 0.6, 0.4, 0.9, 0.4, 0.5, 0.5, 0.8, 0.3, 0.2, 0.6, 0.7, 0.6, 0.1,
+            ],
+        );
         mesh.set_z_vector(z);
 
         let downhill_map = DownhillMap::new(&mesh);

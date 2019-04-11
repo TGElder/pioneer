@@ -1,11 +1,6 @@
 use mesh::Mesh;
 
-pub const DIRECTIONS: [(i32, i32); 4] = [
-    (-1, 0),
-    (0, -1),
-    (1, 0),
-    (0, 1),
-];
+pub const DIRECTIONS: [(i32, i32); 4] = [(-1, 0), (0, -1), (1, 0), (0, 1)];
 
 #[derive(Debug, PartialEq)]
 pub struct DownhillMap {
@@ -17,7 +12,11 @@ impl DownhillMap {
     pub fn new(mesh: &Mesh) -> DownhillMap {
         let mut out = DownhillMap {
             width: mesh.get_width(),
-            directions: na::DMatrix::repeat(mesh.get_width() as usize, mesh.get_width() as usize, [false; 4]),
+            directions: na::DMatrix::repeat(
+                mesh.get_width() as usize,
+                mesh.get_width() as usize,
+                [false; 4],
+            ),
         };
         out.compute_all_directions(mesh);
         out
@@ -84,11 +83,11 @@ mod tests {
     #[test]
     fn test_compute_directions() {
         let mut mesh = Mesh::new(3, 0.0);
-        mesh.set_z_vector(na::DMatrix::from_row_slice(3, 3, &[
-            0.1, 0.8, 0.2,
-            0.3, 0.5, 0.9,
-            0.6, 0.4, 0.7
-        ]));
+        mesh.set_z_vector(na::DMatrix::from_row_slice(
+            3,
+            3,
+            &[0.1, 0.8, 0.2, 0.3, 0.5, 0.9, 0.6, 0.4, 0.7],
+        ));
 
         let expected = [false, true, true, false];
         let actual = DownhillMap::compute_directions(&mesh, 1, 1);
@@ -99,19 +98,20 @@ mod tests {
     #[test]
     fn test_compute_all_directions() {
         let mut mesh = Mesh::new(2, 0.0);
-        mesh.set_z_vector(na::DMatrix::from_row_slice(2, 2, &[
-            0.1, 0.2,
-            0.3, 0.4
-        ]));
+        mesh.set_z_vector(na::DMatrix::from_row_slice(2, 2, &[0.1, 0.2, 0.3, 0.4]));
 
         let expected = DownhillMap {
             width: 2,
-            directions: na::DMatrix::from_row_slice(2, 2, &[
-                [true, true, false, false],
-                [true, true, false, true],
-                [true, true, true, false],
-                [true, true, true, true]
-            ]),
+            directions: na::DMatrix::from_row_slice(
+                2,
+                2,
+                &[
+                    [true, true, false, false],
+                    [true, true, false, true],
+                    [true, true, true, false],
+                    [true, true, true, true],
+                ],
+            ),
         };
 
         let actual = DownhillMap::new(&mesh);
@@ -122,11 +122,11 @@ mod tests {
     #[test]
     fn test_all_cells_have_downhill() {
         let mut mesh = Mesh::new(3, 0.0);
-        mesh.set_z_vector(na::DMatrix::from_row_slice(3, 3, &[
-            0.1, 0.8, 0.2,
-            0.3, 0.5, 0.9,
-            0.6, 0.4, 0.7
-        ]));
+        mesh.set_z_vector(na::DMatrix::from_row_slice(
+            3,
+            3,
+            &[0.1, 0.8, 0.2, 0.3, 0.5, 0.9, 0.6, 0.4, 0.7],
+        ));
         let downhill = DownhillMap::new(&mesh);
 
         assert_eq!(downhill.all_cells_have_downhill(), true);
@@ -135,11 +135,11 @@ mod tests {
     #[test]
     fn test_not_all_cells_have_downhill() {
         let mut mesh = Mesh::new(3, 0.0);
-        mesh.set_z_vector(na::DMatrix::from_row_slice(3, 3, &[
-            0.5, 0.8, 0.2,
-            0.3, 0.1, 0.9,
-            0.6, 0.4, 0.7
-        ]));
+        mesh.set_z_vector(na::DMatrix::from_row_slice(
+            3,
+            3,
+            &[0.5, 0.8, 0.2, 0.3, 0.1, 0.9, 0.6, 0.4, 0.7],
+        ));
         let downhill = DownhillMap::new(&mesh);
 
         assert_eq!(downhill.all_cells_have_downhill(), false);

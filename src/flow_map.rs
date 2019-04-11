@@ -1,6 +1,6 @@
+use downhill_map::DIRECTIONS;
 use mesh::Mesh;
 use single_downhill_map::SingleDownhillMap;
-use downhill_map::DIRECTIONS;
 
 #[derive(Debug, PartialEq)]
 pub struct FlowMap {
@@ -8,9 +8,8 @@ pub struct FlowMap {
 }
 
 impl FlowMap {
-
     pub fn new(width: usize) -> FlowMap {
-        FlowMap{
+        FlowMap {
             flow: na::DMatrix::zeros(width, width),
         }
     }
@@ -24,7 +23,7 @@ impl FlowMap {
     }
 
     pub fn get_max_flow(&self) -> u32 {
-       *self.flow.iter().max().unwrap()
+        *self.flow.iter().max().unwrap()
     }
 
     pub fn set_flow(&mut self, flow: na::DMatrix<u32>) {
@@ -55,7 +54,6 @@ impl FlowMap {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
@@ -70,7 +68,7 @@ mod tests {
             vec![3, 3, 3, 3],
             vec![3, 3, 3, 3],
             vec![0, 0, 0, 0],
-            vec![0, 0, 0, 0]
+            vec![0, 0, 0, 0],
         ];
         let downhill_map = MockDownhillMap::new(directions);
         let downhill_map: Box<SingleDownhillMap> = Box::new(downhill_map);
@@ -78,15 +76,9 @@ mod tests {
         let mut flow_map = FlowMap::new(4);
         flow_map.rain_on(&mesh, &downhill_map, 2, 1);
 
-        let expected = na::DMatrix::from_row_slice(4, 4, &[
-            0, 0, 0, 0,
-            0, 1, 1, 1,
-            0, 1, 0, 0,
-            0, 0, 0, 0
-        ]);
-        let expected = FlowMap{
-            flow: expected
-        };
+        let expected =
+            na::DMatrix::from_row_slice(4, 4, &[0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0]);
+        let expected = FlowMap { flow: expected };
 
         assert_eq!(flow_map, expected);
     }
@@ -99,39 +91,29 @@ mod tests {
             vec![3, 3, 3, 3],
             vec![3, 3, 3, 3],
             vec![0, 0, 0, 0],
-            vec![0, 0, 0, 0]
+            vec![0, 0, 0, 0],
         ];
         let downhill_map = MockDownhillMap::new(directions);
         let downhill_map: Box<SingleDownhillMap> = Box::new(downhill_map);
 
         let flow_map = FlowMap::from(&mesh, &downhill_map);
 
-        let expected = na::DMatrix::from_row_slice(4, 4, &[
-            1, 2, 3, 4,
-            3, 6, 9, 12,
-            2, 2, 2, 2,
-            1, 1, 1, 1
-        ]);
-        let expected = FlowMap{
-            flow: expected
-        };
+        let expected =
+            na::DMatrix::from_row_slice(4, 4, &[1, 2, 3, 4, 3, 6, 9, 12, 2, 2, 2, 2, 1, 1, 1, 1]);
+        let expected = FlowMap { flow: expected };
 
         assert_eq!(flow_map, expected);
     }
 
     #[test]
     pub fn test_max_flow() {
-        let flow = na::DMatrix::from_row_slice(4, 4, &[
-            1, 9, 4, 10,
-            14, 12, 5, 11,
-            7, 2, 16, 8,
-            13, 3, 15, 6
-        ]);
-        let flow_map = FlowMap{
-            flow
-        };
+        let flow = na::DMatrix::from_row_slice(
+            4,
+            4,
+            &[1, 9, 4, 10, 14, 12, 5, 11, 7, 2, 16, 8, 13, 3, 15, 6],
+        );
+        let flow_map = FlowMap { flow };
         assert_eq!(flow_map.get_max_flow(), 16);
     }
-
 
 }
